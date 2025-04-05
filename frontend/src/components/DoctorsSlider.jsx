@@ -106,14 +106,15 @@ function DoctorsSlider() {
             {error}
           </p>
         ) : doctors.length > 0 ? (
-          <Slider {...adjustedSliderSettings} className="mx-[-8px]">
+          <Slider {...adjustedSliderSettings} className="relative mx-auto max-w-[1200px]">
             {doctors.map((doctor) => {
               const averageRating = calculateAverageRating(doctor.reviews);
               return (
                 <div key={doctor._id} className="px-2">
                   <div className="p-6 bg-[var(--background-100)] dark:bg-[var(--background-900)] rounded-lg shadow-md text-center h-full flex flex-col justify-between transition-transform hover:scale-105">
                     <img
-                      src={doctor.image ? `http://localhost:5000${doctor.image}` : femaleProfilePicture}
+                      src={doctor.image ? `http://localhost:5000${doctor.image}` : 
+                      doctor.gender == 'Masculin' ? maleProfilePicture : femaleProfilePicture}
                       alt={`Dr. ${doctor.name}`}
                       className="w-full h-48 sm:h-56 object-cover rounded-md mb-4"
                       onError={(e) => {

@@ -21,7 +21,7 @@ const doctorSchema = new mongoose.Schema({
   name: { type: String, required: true },
   specialty: { type: String, required: true },
   description: { type: String, required: true },
-  image: { type: String, required: true },
+  image: { type: String, required: false },
   gender: { type: String, enum: ['Masculin', 'Feminin', 'Altul'], required: true },
   reviews: [reviewSchema],
 });

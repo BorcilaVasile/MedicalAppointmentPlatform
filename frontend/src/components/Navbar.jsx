@@ -31,6 +31,9 @@ function Navbar() {
           <Link to="/" className="text-lg sm:text-xl hover:text-primary-500 transition-colors">
             Home
           </Link>
+          <Link to="/doctors" className="text-lg sm:text-xl hover:text-primary-500 transition-colors">
+            Doctors
+          </Link>
           <Link to="/about" className="text-lg sm:text-xl hover:text-primary-500 transition-colors">
             About
           </Link>

@@ -11,8 +11,10 @@ import Account from './pages/Account';
 import NotFound from './pages/NotFound';
 import AddDoctor from './pages/AddDoctor';
 import AdminDashboard from './pages/AdminDashboard'; // Importăm pagina AdminDashboard
+import Doctors from './pages/Doctors';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import './App.css'; // Importăm fișierul CSS pentru stilizare
 
 function App() {
   return (
@@ -29,7 +31,8 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/account" element={<Account />} />
               <Route path="/doctors/:id" element={<DoctorProfile />} />
-              <Route path="/admin" element={<AdminDashboard />} /> {/* Ruta pentru AdminDashboard */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/doctors" element={<Doctors />} />
               <Route path="/admin/add-doctor" element={<AddDoctor />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

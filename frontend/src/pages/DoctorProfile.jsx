@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import maleProfilePicture from '../assets/male_profile_picture.png';
+import femaleProfilePicture from '../assets/female_profile_picture.png';
+import { useTheme } from '../context/ThemeContext';
 
 function DoctorProfile() {
   const { id } = useParams();
@@ -34,9 +37,10 @@ function DoctorProfile() {
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-6">{doctor.name}</h1>
       <img
-        src={doctor.image}
-        alt={doctor.name}
-        className="w-full h-64 object-cover rounded-md mb-6"
+        src={doctor.image ? `http://localhost:5000${doctor.image}` 
+            : (doctor.gender === 'Masculin' ? maleProfilePicture : femaleProfilePicture)}
+        alt={`Dr. ${doctor.name}`}
+        className="w-1/2 h-64 object-cover rounded-md mb-6"
       />
       <p className="text-lg mb-2"><strong>Specializare:</strong> {doctor.specialty}</p>
       <p className="text-lg mb-4">{doctor.description}</p>
