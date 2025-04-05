@@ -1,21 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CompanyInfo from '../components/CompanyInfo'; 
+import googleLogo from '../assets/google-icon.png'; 
 
 function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState(''); // Stare pentru confirmarea parolei
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [gender, setGender] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Funcția pentru verificarea parolei
   const checkPassword = (confirmValue) => {
-    setConfirmPassword(confirmValue); // Actualizează starea confirmPassword
+    setConfirmPassword(confirmValue);
     if (password && confirmValue && password !== confirmValue) {
       setError('Passwords do not match');
     } else {
-      setError(''); // Resetează eroarea dacă parolele se potrivesc
+      setError('');
     }
   };
 
@@ -23,19 +26,23 @@ function Signup() {
     e.preventDefault();
     setError('');
 
-    // Verifică dacă parolele se potrivesc înainte de a trimite cererea
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
+    if (!termsAccepted) {
+      setError('You must agree to the terms & policy');
+      return;
+    }
+
+    const formData = { name, email, password, gender };
+
     try {
       const response = await fetch('http://localhost:5000/api/users', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password, role: 'patient' }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
@@ -51,109 +58,167 @@ function Signup() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-screen bg-[var(--background-50)] dark:bg-[var(--background-950)] transition-colors">
-      <div className="w-full max-w-md p-6 bg-[var(--background-100)] dark:bg-[var(--background-900)] rounded-lg shadow-md">
+    <div
+      className="min-h-screen flex"
+      style={{
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Stânga: Formular */}
+      <div className="w-full md:w-1/2 bg-[var(--background-50)] dark:bg-[var(--background-900)] p-8 md:p-12 flex items-center justify-center">
+      <div className="w-full max-w-md bg-[var(--background-100)] dark:bg-[var(--background-950)] rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
         {/* Heading */}
-        <h1 className="text-3xl font-bold text-center mb-6 text-[var(--text-800)] dark:text-[var(--text-200)]">
-          Sign Up
+        <h1 className="text-3xl font-extrabold text-center mb-6 text-[var(--text-800)] dark:text-[var(--text-200)] bg-clip-text bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)]">
+          Get Started Now
         </h1>
 
         {/* Error Message */}
         {error && (
-          <p className="text-center mb-4 text-[var(--accent-500)] dark:text-[var(--accent-600)] font-medium">
+          <div className="mb-6 p-3 bg-[var(--accent-100)] dark:bg-[var(--accent-200)] text-[var(--accent-700)] dark:text-[var(--accent-600)] rounded-md text-center font-medium animate-pulse">
             {error}
-          </p>
+          </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-1"
-            >
-              Name
-            </label>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            
             <input
               type="text"
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 border border-[var(--text-400)] dark:border-[var(--text-600)] rounded-md bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-colors"
+              className="w-full p-3 border border-[var(--text-300)] dark:border-[var(--text-700)] rounded-lg bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-all duration-200 placeholder-[var(--text-400)] dark:placeholder-[var(--text-600)]"
               placeholder="Enter your name"
               required
             />
           </div>
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-1"
-            >
-              Email
-            </label>
+
+          <div className="space-y-2">
+        
             <input
               type="email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border border-[var(--text-400)] dark:border-[var(--text-600)] rounded-md bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-colors"
+              className="w-full p-3 border border-[var(--text-300)] dark:border-[var(--text-700)] rounded-lg bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-all duration-200 placeholder-[var(--text-400)] dark:placeholder-[var(--text-600)]"
               placeholder="Enter your email"
               required
             />
           </div>
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-1"
-            >
-              Password
-            </label>
+
+          <div className="space-y-2">
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 border border-[var(--text-400)] dark:border-[var(--text-600)] rounded-md bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-colors"
+              className="w-full p-3 border border-[var(--text-300)] dark:border-[var(--text-700)] rounded-lg bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-all duration-200 placeholder-[var(--text-400)] dark:placeholder-[var(--text-600)]"
               placeholder="Enter your password"
               required
             />
           </div>
-          <div>
-            <label
-              htmlFor="confirm_password"
-              className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-1"
-            >
-              Confirm password
-            </label>
+
+          <div className="space-y-2">
+           
             <input
               type="password"
-              id="confirm_password" // Corectăm id-ul
-              value={confirmPassword} // Folosim confirmPassword
-              onChange={(e) => checkPassword(e.target.value)} // Apelăm checkPassword
-              className="w-full p-2 border border-[var(--text-400)] dark:border-[var(--text-600)] rounded-md bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-colors"
+              id="confirm_password"
+              value={confirmPassword}
+              onChange={(e) => checkPassword(e.target.value)}
+              className="w-full p-3 border border-[var(--text-300)] dark:border-[var(--text-700)] rounded-lg bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-all duration-200 placeholder-[var(--text-400)] dark:placeholder-[var(--text-600)]"
               placeholder="Confirm your password"
               required
             />
           </div>
+
+          <div className="space-y-2">
+           
+            <select
+              id="gender"
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="w-full p-3 border border-[var(--text-300)] dark:border-[var(--text-700)] rounded-lg bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-all duration-200 placeholder-[var(--text-400)] dark:placeholder-[var(--text-600)]"
+              required
+            >
+              <option value="" hidden>
+                Select your gender
+              </option>
+              <option value="Masculin">Masculin</option>
+              <option value="Feminin">Feminin</option>
+              <option value="Altul">Altul</option>
+            </select>
+          </div>
+
+          {/* Terms & Policy Checkbox */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="terms"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              className="h-4 w-4 text-[var(--primary-500)] dark:text-[var(--primary-600)] border-[var(--text-300)] dark:border-[var(--text-700)] rounded focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)]"
+            />
+            <label
+              htmlFor="terms"
+              className="text-sm text-[var(--text-700)] dark:text-[var(--text-300)]"
+            >
+              I agree to the{' '}
+              <a
+                href="/terms"
+                className="text-[var(--primary-500)] dark:text-[var(--primary-600)] hover:underline"
+              >
+                terms & policy
+              </a>
+            </label>
+          </div>
+
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-[var(--primary-500)] text-[var(--text-50)] dark:bg-[var(--primary-600)] dark:text-[var(--text-950)] font-semibold rounded-md hover:bg-[var(--primary-600)] dark:hover:bg-[var(--primary-700)] transition-colors"
+            className="w-full py-3 px-4 bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)] text-[var(--text-50)] dark:from-[var(--primary-600)] dark:to-[var(--secondary-600)] dark:text-[var(--text-950)] font-semibold rounded-lg hover:from-[var(--primary-600)] hover:to-[var(--secondary-600)] dark:hover:from-[var(--primary-700)] dark:hover:to-[var(--secondary-700)] transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-102"
           >
             Sign Up
           </button>
         </form>
 
+        {/* Separator */}
+        <div className="my-6 flex items-center">
+          <hr className="flex-grow border-[var(--text-300)] dark:border-[var(--text-700)]" />
+          <span className="px-3 text-[var(--text-600)] dark:text-[var(--text-400)]">or</span>
+          <hr className="flex-grow border-[var(--text-300)] dark:border-[var(--text-700)]" />
+        </div>
+
+        {/* Social Login Buttons */}
+        <div className="space-y-3">
+          <button
+            type="button"
+            className="w-full flex items-center justify-center py-3 px-4 border border-[var(--text-300)] dark:border-[var(--text-700)] rounded-lg text-[var(--text-800)] dark:text-[var(--text-200)] bg-[var(--background-50)] dark:bg-[var(--background-950)] hover:bg-[var(--background-200)] dark:hover:bg-[var(--background-800)] transition-all duration-200"
+          >
+            <img
+              src={googleLogo}
+              alt="Google Logo"
+              className="w-5 h-5 mr-2"
+            />
+               Sign in with Google
+          </button>
+        </div>
+
         {/* Login Link */}
-        <p className="text-center mt-4 text-[var(--text-600)] dark:text-[var(--text-400)]">
-          Already have an account?{' '}
+        <p className="text-center mt-6 text-[var(--text-600)] dark:text-[var(--text-400)]">
+          Have an account?{' '}
           <a
             href="/login"
-            className="text-[var(--primary-500)] dark:text-[var(--primary-600)] hover:underline"
+            className="text-[var(--primary-500)] dark:text-[var(--primary-600)] hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-700)] font-medium transition-colors duration-200"
           >
-            Login
+            Sign In
           </a>
         </p>
       </div>
+    </div>
+
+      {/* Dreapta: Logo și citat */}
+      <CompanyInfo/>
     </div>
   );
 }

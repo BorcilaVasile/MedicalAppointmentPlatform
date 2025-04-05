@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -10,18 +10,23 @@ import DoctorProfile from './pages/DoctorProfile';
 import Account from './pages/Account';
 import NotFound from './pages/NotFound';
 import AddDoctor from './pages/AddDoctor';
-import AdminDashboard from './pages/AdminDashboard'; // Importăm pagina AdminDashboard
+import AdminDashboard from './pages/AdminDashboard';
 import Doctors from './pages/Doctors';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import './App.css'; // Importăm fișierul CSS pentru stilizare
+import './App.css';
 
 function App() {
+  const location = useLocation();
+
+  // Ascunde navbar-ul pentru paginile de login și signup
+  const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <div className="flex flex-col min-h-screen">
-          <Navbar />
+          {!hideNavbar && <Navbar />}
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />

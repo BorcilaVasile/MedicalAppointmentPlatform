@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import CompanyInfo from '../components/CompanyInfo';
+import googleLogo from '../assets/google-icon.png'; 
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -34,11 +36,19 @@ function Login() {
       console.error(err);
       setError('An error occurred. Please try again.');
     }
-  };
+  }
 
   return (
-    <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-screen bg-[var(--background-50)] dark:bg-[var(--background-950)] transition-colors">
-      <div className="w-full max-w-md p-6 bg-[var(--background-100)] dark:bg-[var(--background-900)] rounded-lg shadow-md">
+    <div
+      className="min-h-screen flex"
+      style={{
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Stânga: Formular */}
+      <div className="w-full md:w-1/2 bg-[var(--background-50)] dark:bg-[var(--background-900)] p-8 md:p-12 flex items-center justify-center">
+      <div className="w-full max-w-md bg-[var(--background-100)] dark:bg-[var(--background-950)] rounded-xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl">
         <h1 className="text-3xl font-bold text-center mb-6 text-[var(--text-800)] dark:text-[var(--text-200)]">
           Login
         </h1>
@@ -49,12 +59,6 @@ function Login() {
         )}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-1"
-            >
-              Email
-            </label>
             <input
               type="email"
               id="email"
@@ -66,12 +70,6 @@ function Login() {
             />
           </div>
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-1"
-            >
-              Password
-            </label>
             <input
               type="password"
               id="password"
@@ -84,11 +82,32 @@ function Login() {
           </div>
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-[var(--primary-500)] text-[var(--text-50)] dark:bg-[var(--primary-600)] dark:text-[var(--text-950)] font-semibold rounded-md hover:bg-[var(--primary-600)] dark:hover:bg-[var(--primary-700)] transition-colors"
+            className="w-full py-3 px-4 bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)] text-[var(--text-50)] dark:from-[var(--primary-600)] dark:to-[var(--secondary-600)] dark:text-[var(--text-950)] font-semibold rounded-lg hover:from-[var(--primary-600)] hover:to-[var(--secondary-600)] dark:hover:from-[var(--primary-700)] dark:hover:to-[var(--secondary-700)] transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-102"
           >
             Login
           </button>
         </form>
+        {/* Separator */}
+                <div className="my-6 flex items-center">
+                  <hr className="flex-grow border-[var(--text-300)] dark:border-[var(--text-700)]" />
+                  <span className="px-3 text-[var(--text-600)] dark:text-[var(--text-400)]">or</span>
+                  <hr className="flex-grow border-[var(--text-300)] dark:border-[var(--text-700)]" />
+                </div>
+        
+                {/* Social Login Buttons */}
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-center py-3 px-4 border border-[var(--text-300)] dark:border-[var(--text-700)] rounded-lg text-[var(--text-800)] dark:text-[var(--text-200)] bg-[var(--background-50)] dark:bg-[var(--background-950)] hover:bg-[var(--background-200)] dark:hover:bg-[var(--background-800)] transition-all duration-200"
+                  >
+                    <img
+                      src={googleLogo}
+                      alt="Google Logo"
+                      className="w-5 h-5 mr-2"
+                    />
+                       Sign in with Google
+                  </button>
+                </div>
         <p className="text-center mt-4 text-[var(--text-600)] dark:text-[var(--text-400)]">
           Don’t have an account?{' '}
           <a
@@ -98,7 +117,9 @@ function Login() {
             Sign Up
           </a>
         </p>
-      </div>
+    </div>
+    </div>
+    <CompanyInfo/>
     </div>
   );
 }

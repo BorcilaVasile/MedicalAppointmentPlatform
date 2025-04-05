@@ -3,8 +3,32 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
 
+// Configure multer for file upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
 
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Not an image! Please upload an image file.'), false);
+    }
+  }
+});
 
 router.get('/me', authMiddleware, async (req, res) => {
   try {
@@ -18,35 +42,50 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
-router.put('/update', authMiddleware, async (req, res) => {
-  const { name, email } = req.body;
-
-  // Validare
-  if (!name || !email) {
-    return res.status(400).json({ message: 'Numele și email-ul sunt obligatorii.' });
-  }
-
+router.put('/update', authMiddleware, upload.single('profilePicture'), async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'Utilizatorul nu a fost găsit.' });
     }
 
-    // Verifică dacă email-ul este deja folosit de alt utilizator
-    if (email !== user.email) {
-      const emailExists = await User.findOne({ email });
-      if (emailExists) {
-        return res.status(400).json({ message: 'Email-ul este deja folosit.' });
+    // Update basic fields
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.email) {
+      // Check if email is already used by another user
+      if (req.body.email !== user.email) {
+        const emailExists = await User.findOne({ email: req.body.email });
+        if (emailExists) {
+          return res.status(400).json({ message: 'Email-ul este deja folosit.' });
+        }
+        user.email = req.body.email;
       }
     }
+    if (req.body.phone) user.phone = req.body.phone;
+    if (req.body.address) user.address = req.body.address;
 
-    // Actualizează câmpurile
-    user.name = name;
-    user.email = email;
+    // Handle profile picture if uploaded
+    if (req.file) {
+      user.profilePicture = `/uploads/${req.file.filename}`;
+    }
+
     await user.save();
 
-    res.json({ name: user.name, email: user.email, role: user.role });
+    // Return updated user data without password
+    const updatedUser = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      profilePicture: user.profilePicture,
+      role: user.role,
+      registrationDate: user.createdAt
+    };
+
+    res.json(updatedUser);
   } catch (err) {
+    console.error('Update error:', err);
     res.status(500).json({ message: 'Eroare server.' });
   }
 });
