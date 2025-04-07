@@ -5,6 +5,7 @@ const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const Doctor = require('../models/Doctor');
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
@@ -131,23 +132,40 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    // Caută utilizatorul după email
     const user = await User.findOne({ email });
+    
     if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' });
+      return res.status(400).json({ message: 'Email sau parolă invalidă' });
     }
 
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password' });
+      return res.status(400).json({ message: 'Email sau parolă invalidă' });
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign(
+      { 
+        id: user._id, 
+        role: user.role 
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '24h' }
+    );
 
-    res.json({ token });
+    res.json({ 
+      token, 
+      role: user.role,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Eroare server' });
   }
 });
 

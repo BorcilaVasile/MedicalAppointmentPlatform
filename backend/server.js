@@ -10,8 +10,10 @@ const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 const carouselRoutes = require('./routes/carousel');
 const domainsRoutes = require('./routes/domains');
-const clinicsRoutes = require('./routes/clinics');
-const doctorRoutes = require('./routes/doctor'); 
+const doctorRoutes = require('./routes/doctorRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const clinicRoutes = require('./routes/clinicRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 dotenv.config();
 
@@ -34,8 +36,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/carousel', carouselRoutes);
 app.use('/api/domains', domainsRoutes);
-app.use('/api/clinics', clinicsRoutes);
-app.use('/api/doctors', doctorRoutes); 
+app.use('/api/doctors', doctorRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/clinics', clinicRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Ruta de test
 app.get('/', (req, res) => {
@@ -50,6 +54,12 @@ mongoose
   })
   .then(() => console.log('Conectat la MongoDB'))
   .catch((err) => console.error('Eroare la conectarea la MongoDB:', err));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
+});
 
 // Pornire server
 app.listen(PORT, () => {

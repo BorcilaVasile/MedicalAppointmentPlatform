@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -90,6 +91,12 @@ function ClinicsSlider() {
                       {clinic.address}
                     </p>
                   </div>
+                  <Link
+                    to={`/clinics/${clinic._id}`}
+                    className="inline-block py-2 px-4 sm:py-2.5 sm:px-6 bg-[var(--primary-500)] text-[var(--text-50)] dark:bg-[var(--primary-600)] dark:text-[var(--text-950)] rounded-md text-base sm:text-lg font-medium hover:bg-[var(--primary-600)] dark:hover:bg-[var(--primary-700)] transition-colors"
+                  >
+                    Vezi Detalii
+                  </Link>
                 </div>
               </div>
             ))}

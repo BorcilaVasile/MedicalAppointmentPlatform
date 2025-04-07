@@ -1,24 +1,31 @@
 // src/components/Navbar.jsx
 import { Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUser, FaSignOutAlt, FaCog, FaMoon, FaSun } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaCog, FaMoon, FaSun, FaUserShield, FaUserMd, FaBell } from 'react-icons/fa';
 import maleProfilePicture from '../assets/male_profile_picture.png';
 import femaleProfilePicture from '../assets/female_profile_picture.png';
 import logo from '../assets/elysium-logo.svg';
 import sun from '../assets/sun.svg';
 import moon from '../assets/moon.svg';
+import NotificationBell from './NotificationBell';
+import { format } from 'date-fns';
+import axios from 'axios';
 
 function Navbar() {
-  const { isAuthenticated, logout, user } = useAuth();
+  const { isAuthenticated, logout, userRole, user, token } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const notificationsRef = useRef(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -30,28 +37,61 @@ function Navbar() {
         }
 
         try {
-          const response = await fetch('http://localhost:5000/api/auth/me', {
+          const endpoint = userRole === 'doctor' 
+            ? 'http://localhost:5000/api/doctors/me'
+            : 'http://localhost:5000/api/auth/me';
+
+          const response = await fetch(endpoint, {
             headers: {
-              Authorization: `Bearer ${token}`,
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             },
           });
 
           if (!response.ok) {
-            throw new Error('Failed to fetch user data');
+            throw new Error(`Failed to fetch user data: ${response.status}`);
           }
 
           const data = await response.json();
+          console.log('User data:', data); // Pentru debugging
           setUserData(data);
           setError(null);
         } catch (error) {
           console.error('Error fetching user data:', error);
           setError(error.message);
+          // În caz de eroare de autentificare, deconectăm utilizatorul
+          if (error.message.includes('401') || error.message.includes('403')) {
+            logout();
+            navigate('/login');
+          }
         }
       }
     };
 
     fetchUserData();
+  }, [isAuthenticated, userRole, logout, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -73,41 +113,115 @@ function Navbar() {
     setIsProfileMenuOpen(!isProfileMenuOpen);
   };
 
+  const getDashboardLink = () => {
+    switch (userRole) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'doctor':
+        return '/doctor/dashboard';
+      default:
+        return '/*';
+    }
+  };
+
+  const getDashboardIcon = () => {
+    switch (userRole) {
+      case 'admin':
+        return <FaUserShield className="mr-2" />;
+      case 'doctor':
+        return <FaUserMd className="mr-2" />;
+      default:
+        return <FaUser className="mr-2" />;
+    }
+  };
+
+  const fetchNotifications = useCallback(async () => {
+    if (!token) return;
+    
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:5000/api/notifications/', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      setNotifications(response.data);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const handleNotificationClick = async (notification) => {
+    if (!notification.read) {
+      try {
+        await axios.put(`http://localhost:5000/api/notifications/${notification._id}/read`, {}, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        // Update notifications after marking as read
+        await fetchNotifications();
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+    setShowNotifications(false);
+    navigate('/notifications');
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAllAsRead = async () => {
+    try {
+      await axios.put('http://localhost:5000/api/notifications/mark-all-as-read', {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
   return (
-    <nav className="bg-gray-50 dark:bg-[var(--background-900)] shadow-md">
+    <nav className="bg-[var(--background-100)] dark:bg-[var(--background-900)] shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and Main Navigation */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3">
               <img src={logo} alt="Elysium Logo" className="h-10 w-10 sm:h-12 sm:w-12" />
-              <h1 className="text-3xl sm:text-4xl font-bold light:text-black dark:text-white">Elysium</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-[var(--text-900)] dark:text-[var(--text-100)]">Elysium</h1>
             </Link>
             <div className="hidden md:flex md:ml-10 space-x-8">
               <Link
                 to="/"
-                className="text-gray-900 dark:text-gray-300 hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Acasă
               </Link>
               <Link
                 to="/doctors"
-                className="text-gray-900 dark:text-gray-300 hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Doctori
               </Link>
               <Link
                 to="/about"
-                className="text-gray-900 dark:text-gray-300 hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Despre Noi
               </Link>
-              {isAuthenticated && user?.role === 'admin' && (
+              {userRole !== 'patient' && isAuthenticated && (
                 <Link
-                  to="/admin"
-                  className="text-gray-900 dark:text-gray-300 hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  to={getDashboardLink()}
+                  className="flex items-center text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
-                  Admin
+                  {getDashboardIcon()}
+                  {userRole === 'admin' ? 'Admin' : userRole==='doctor' ? 'Doctor' : ''}
                 </Link>
               )}
             </div>
@@ -115,16 +229,88 @@ function Navbar() {
 
           {/* Right side navigation */}
           <div className="flex items-center space-x-4">
+            <div className="relative" ref={notificationsRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2 rounded-full text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <FaBell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-96 bg-[#1F1F2E] rounded-lg shadow-lg overflow-hidden z-50 border border-gray-700">
+                  {/* Mark all as read button */}
+                  <div className="px-4 py-2 flex items-center text-gray-400 hover:text-white cursor-pointer border-b border-gray-700"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         markAllAsRead();
+                       }}>
+                    <span className="mr-2">✓</span>
+                    Marchează toate ca citite
+                  </div>
+
+                  {/* Notifications List */}
+                  <div className="max-h-[400px] overflow-y-auto">
+                    {loading ? (
+                      <div className="px-4 py-3 text-center text-gray-400">
+                        Se încarcă...
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div className="px-4 py-3 text-center text-gray-400">
+                        Nu există notificări
+                      </div>
+                    ) : (
+                      <div>
+                        {notifications.slice(0, 5).map((notification) => (
+                          <div
+                            key={notification._id}
+                            onClick={() => handleNotificationClick(notification)}
+                            className={`px-4 py-3 cursor-pointer hover:bg-[#2F2F3E] ${
+                              !notification.read ? 'bg-[#2F2F3E]' : ''
+                            }`}
+                          >
+                            <p className="text-white text-sm font-medium">
+                              {notification.message}
+                            </p>
+                            <p className="text-gray-400 text-xs mt-1">
+                              {format(new Date(notification.createdAt), 'p')}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="border-t border-gray-700">
+                    <button
+                      onClick={() => {
+                        setShowNotifications(false);
+                        navigate('/notifications');
+                      }}
+                      className="w-full text-center text-sm text-gray-400 hover:text-white py-3"
+                    >
+                      Vezi toate notificările
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full text-gray-900 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-full text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               {isDarkMode ? <FaSun className="w-5 h-5" /> : <FaMoon className="w-5 h-5" />}
             </button>
 
             {isAuthenticated ? (
-              <div className="relative">
+              <div className="relative md:block hidden">
                 <button
                   onClick={handleProfileClick}
                   className="flex items-center space-x-2 focus:outline-none"
@@ -154,16 +340,24 @@ function Navbar() {
                       className="absolute right-0 mt-2 w-48 bg-white dark:bg-[var(--background-800)] rounded-md shadow-lg py-1 z-50"
                     >
                       <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="text-sm font-medium text-[var(--text-900)] dark:text-[var(--text-100)]">
                           {userData?.name || 'Utilizator'}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-[var(--text-500)] dark:text-[var(--text-400)]">
                           {userData?.email || 'Email indisponibil'}
                         </p>
                       </div>
                       <Link
+                        to={getDashboardLink()}
+                        className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-700"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        {getDashboardIcon()}
+                        Dashboard
+                      </Link>
+                      <Link
                         to="/account"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-700"
                         onClick={() => setIsProfileMenuOpen(false)}
                       >
                         <FaUser className="mr-3" />
@@ -171,7 +365,7 @@ function Navbar() {
                       </Link>
                       <Link
                         to="/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-700"
                         onClick={() => setIsProfileMenuOpen(false)}
                       >
                         <FaCog className="mr-3" />
@@ -179,7 +373,7 @@ function Navbar() {
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-600)] hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <FaSignOutAlt className="mr-3" />
                         Deconectare
@@ -192,7 +386,7 @@ function Navbar() {
               <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
-                  className="text-gray-900 dark:text-gray-300 hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Autentificare
                 </Link>
@@ -208,7 +402,7 @@ function Navbar() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-md text-gray-900 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
+              className="md:hidden p-2 rounded-md text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
             >
               <svg
                 className="h-6 w-6"
@@ -244,37 +438,38 @@ function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-gray-50 dark:bg-[var(--background-900)]"
+            className="md:hidden bg-[var(--background-100)] dark:bg-[var(--background-900)]"
           >
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <div className="px-4 py-3 space-y-1">
               <Link
                 to="/"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-300 hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-400)]"
+                className="block px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Acasă
               </Link>
               <Link
                 to="/doctors"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-300 hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-400)]"
+                className="block px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Doctori
               </Link>
               <Link
                 to="/about"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-300 hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-400)]"
+                className="block px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Despre Noi
               </Link>
-              {isAuthenticated && user?.role === 'admin' && (
+              {isAuthenticated && (
                 <Link
-                  to="/admin"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-gray-300 hover:text-[var(--primary-600)] dark:hover:text-[var(--primary-400)]"
+                  to={getDashboardLink()}
+                  className="flex items-center px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Admin
+                  {getDashboardIcon()}
+                  {userRole === 'admin' ? 'Admin' : userRole === 'doctor' ? 'Doctor' : 'Dashboard'}
                 </Link>
               )}
             </div>

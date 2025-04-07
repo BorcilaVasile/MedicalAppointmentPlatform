@@ -1,63 +1,95 @@
 // src/context/AuthContext.js
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
-  const [userRole, setUserRole] = useState(null); // Adaugă starea pentru rolul utilizatorului
+export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      try {
-        const response = await fetch('http://localhost:5000/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUserRole(data.role); // Setează rolul utilizatorului
+    const validateToken = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedRole = localStorage.getItem('userRole');
+      
+      if (storedToken && storedRole) {
+        try {
+          // Verify token by making a request to the backend
+          const response = await axios.get('http://localhost:5000/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${storedToken}`
+            }
+          });
+          
+          if (response.status === 200) {
+            setToken(storedToken);
+            setUserRole(storedRole);
+            setIsAuthenticated(true);
+          } else {
+            // If token is invalid, clear everything
+            localStorage.removeItem('token');
+            localStorage.removeItem('userRole');
+            setToken(null);
+            setUserRole(null);
+            setIsAuthenticated(false);
+          }
+        } catch (error) {
+          // If request fails, token is invalid
+          localStorage.removeItem('token');
+          localStorage.removeItem('userRole');
+          setToken(null);
+          setUserRole(null);
+          setIsAuthenticated(false);
         }
-      } catch (err) {
-        console.error('Eroare la preluarea rolului utilizatorului:', err);
       }
+      setLoading(false);
     };
 
-    if (isAuthenticated) {
-      fetchUserRole();
-    }
-  }, [isAuthenticated]);
+    validateToken();
+  }, []);
 
-  const login = (token) => {
+  const login = async (token, role) => {
     localStorage.setItem('token', token);
+    localStorage.setItem('userRole', role);
+    setToken(token);
+    setUserRole(role);
     setIsAuthenticated(true);
-    // Preia rolul utilizatorului imediat după logare
-    fetch('http://localhost:5000/api/auth/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => setUserRole(data.role))
-      .catch((err) => console.error('Eroare la preluarea rolului utilizatorului:', err));
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    setToken(null);
+    setUserRole(null);
     setIsAuthenticated(false);
-    setUserRole(null); // Resetează rolul utilizatorului
   };
 
+  if (loading) {
+    return null; // or a loading spinner
+  }
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userRole, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        userRole,
+        token,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
