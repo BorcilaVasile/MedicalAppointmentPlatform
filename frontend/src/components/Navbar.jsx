@@ -76,9 +76,23 @@ function Navbar() {
       fetchNotifications();
       // Poll for new notifications every 30 seconds
       const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
+      
+      // Creează un event listener pentru a actualiza notificările
+      const handleNotificationsRead = () => {
+        console.log('Event primit: notifications-updated');
+        fetchNotifications()
+          .then(() => console.log('Notificări reîmprospătate după eveniment'))
+          .catch(err => console.error('Eroare la reîmprospătarea notificărilor:', err));
+      };
+      
+      window.addEventListener('notifications-updated', handleNotificationsRead);
+      
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('notifications-updated', handleNotificationsRead);
+      };
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, token]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -92,6 +106,11 @@ function Navbar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    console.log('Navbar - Notificări actualizate:', notifications);
+    console.log('Număr notificări necitite:', notifications.filter(n => !n.read).length);
+  }, [notifications]);
 
   const handleLogout = async () => {
     try {
@@ -136,7 +155,7 @@ function Navbar() {
   };
 
   const fetchNotifications = useCallback(async () => {
-    if (!token) return;
+    if (!token) return Promise.resolve([]);
     
     try {
       setLoading(true);
@@ -145,9 +164,16 @@ function Navbar() {
           'Authorization': `Bearer ${token}`
         }
       });
-      setNotifications(response.data);
+      console.log('Notificări primite:', response.data.length);
+      // Filtrăm și verificăm datele primite pentru a evita erori de procesare
+      const validNotifications = Array.isArray(response.data) ? response.data : [];
+      setNotifications(validNotifications);
+      return validNotifications;
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      // În caz de eroare, setăm un array gol pentru a evita crash-ul aplicației
+      setNotifications([]);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -171,16 +197,19 @@ function Navbar() {
     navigate('/notifications');
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Calculăm numărul de notificări necitite în mod sigur pentru a evita erori
+  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => n && !n.read).length : 0;
 
   const markAllAsRead = async () => {
     try {
-      await axios.put('http://localhost:5000/api/notifications/mark-all-as-read', {}, {
+      await axios.put('http://localhost:5000/api/notifications/read-all', {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      fetchNotifications();
+      // Reîncărcăm notificările imediat după
+      await fetchNotifications();
+      console.log('Toate notificările au fost marcate ca citite');
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }

@@ -3,6 +3,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -76,6 +77,38 @@ export default {
   },
   plugins: [import("daisyui")],
   daisyui: {
-    themes: ["light", "dark"],
+    themes: [{
+      emerald: {
+        "color-scheme": "light",
+        "primary": "#4b92b2",
+        "primary-content": "#ffffff",
+        "secondary": "#9d8bb0",
+        "secondary-content": "#ffffff",
+        "accent": "#e3a982",
+        "accent-content": "#ffffff",
+        "neutral": "#3f4a5c",
+        "neutral-content": "#f8fafc",
+        "base-100": "#ffffff",
+        "base-200": "#f5f7fa",
+        "base-300": "#e9edf2",
+        "base-content": "#2e3440",
+      },
+      dracula: {
+        "color-scheme": "dark",
+        "primary": "#81a1c1",
+        "primary-content": "#ffffff",
+        "secondary": "#b48ead",
+        "secondary-content": "#ffffff",
+        "accent": "#ebcb8b",
+        "accent-content": "#2e3440",
+        "neutral": "#4c566a",
+        "neutral-content": "#eceff4",
+        "base-100": "#2e3440",
+        "base-200": "#292e39",
+        "base-300": "#242933",
+        "base-content": "#e5e9f0",
+      }
+    }],
+    darkTheme: "dracula",
   },
 };

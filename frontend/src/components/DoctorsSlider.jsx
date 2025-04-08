@@ -10,7 +10,7 @@ import 'slick-carousel/slick/slick-theme.css';
 const doctorSliderSettings = {
   dots: true,
   infinite: true,
-  speed: 500,
+  speed: 700,
   slidesToShow: 3,
   slidesToScroll: 1,
   autoplay: true,
@@ -51,7 +51,7 @@ const renderStars = (rating) => {
     stars.push(
       <span
         key={i}
-        className={i <= Math.round(rating) ? 'text-[var(--accent-500)] dark:text-[var(--accent-600)]' : 'text-[var(--text-400)] dark:text-[var(--text-600)]'}
+        className={`text-lg ${i <= Math.round(rating) ? 'text-[var(--accent-500)] dark:text-[var(--accent-500)]' : 'text-[var(--text-300)] dark:text-[var(--text-700)]'}`}
       >
         ★
       </span>
@@ -92,72 +92,82 @@ function DoctorsSlider() {
   };
 
   return (
-    <section className="py-12 sm:py-16 bg-[var(--background-50)] dark:bg-[var(--background-950)] transition-colors">
-      <div className="container mx-auto px-4 sm:px-6">
-        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-8 sm:mb-12 text-[var(--text-800)] dark:text-[var(--text-200)]">
-          Doctorii Noștri
-        </h2>
-        {loading ? (
-          <p className="text-center text-lg sm:text-xl text-[var(--text-600)] dark:text-[var(--text-400)]">
-            Se încarcă doctorii...
-          </p>
-        ) : error ? (
-          <p className="text-center text-lg sm:text-xl text-[var(--accent-500)] dark:text-[var(--accent-600)]">
+    <div className="py-4">
+      {loading ? (
+        <div className="flex justify-center items-center py-16">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="w-10 h-10 rounded-full bg-[var(--primary-200)] dark:bg-[var(--primary-900)]"></div>
+            <div className="mt-4 h-4 w-24 bg-[var(--background-200)] dark:bg-[var(--background-700)] rounded"></div>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 px-4">
+          <p className="text-[var(--accent-600)] dark:text-[var(--accent-400)] text-lg font-medium">
             {error}
           </p>
-        ) : doctors.length > 0 ? (
-          <Slider {...adjustedSliderSettings} className="relative mx-auto max-w-[1200px]">
-            {doctors.map((doctor) => {
-              const averageRating = calculateAverageRating(doctor.reviews);
-              return (
-                <div key={doctor._id} className="px-2">
-                  <div className="p-6 bg-[var(--background-100)] dark:bg-[var(--background-900)] rounded-lg shadow-md text-center h-full flex flex-col justify-between transition-transform hover:scale-105">
+          <p className="mt-2 text-[var(--text-500)]">Încercați să reîmprospătați pagina.</p>
+        </div>
+      ) : doctors.length > 0 ? (
+        <Slider {...adjustedSliderSettings} className="doctor-slider">
+          {doctors.map((doctor) => {
+            const averageRating = calculateAverageRating(doctor.reviews);
+            return (
+              <div key={doctor._id} className="px-3 py-2">
+                <div className="group h-full flex flex-col overflow-hidden rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg bg-gradient-to-b from-[var(--background-50)] to-[var(--background-100)] dark:from-[var(--background-800)] dark:to-[var(--background-900)]">
+                  <div className="relative overflow-hidden">
                     <img
                       src={doctor.image ? `http://localhost:5000${doctor.image}` : 
-                      doctor.gender == 'Masculin' ? maleProfilePicture : femaleProfilePicture}
+                      doctor.gender === 'Masculin' ? maleProfilePicture : femaleProfilePicture}
                       alt={`Dr. ${doctor.name}`}
-                      className="w-full h-48 sm:h-56 object-cover rounded-md mb-4"
+                      className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = femaleProfilePicture;
+                        e.target.src = doctor.gender === 'Masculin' ? maleProfilePicture : femaleProfilePicture;
                       }}
                     />
-                    <div className="flex-1">
-                      <h3 className="text-xl sm:text-2xl font-semibold mb-2 text-[var(--text-800)] dark:text-[var(--text-200)]">
-                        {doctor.name}
-                      </h3>
-                      <p className="text-base sm:text-lg mb-2 text-[var(--text-700)] dark:text-[var(--text-300)]">
-                        {doctor.specialty}
-                      </p>
-                      <p className="text-sm sm:text-base mb-4 text-[var(--text-600)] dark:text-[var(--text-400)] line-clamp-2">
-                        {doctor.description}
-                      </p>
-                      <div className="flex justify-center items-center mb-4">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent h-20"></div>
+                  </div>
+                  
+                  <div className="flex-1 p-5 flex flex-col">
+                    <h3 className="text-xl font-semibold mb-1 text-[var(--text-900)] dark:text-white">
+                      Dr. {doctor.name}
+                    </h3>
+                    <p className="text-[var(--primary-600)] dark:text-[var(--primary-400)] font-medium mb-2">
+                      {doctor.specialty}
+                    </p>
+                    <p className="text-[var(--text-600)] dark:text-[var(--text-100)] line-clamp-2 mb-4 text-sm">
+                      {doctor.description}
+                    </p>
+                    
+                    <div className="mt-auto">
+                      <div className="flex items-center mb-4">
                         {renderStars(averageRating)}
-                        <span className="ml-2 text-sm sm:text-base text-[var(--text-600)] dark:text-[var(--text-400)]">
-                          ({averageRating})
+                        <span className="ml-2 text-[var(--text-500)] dark:text-[var(--text-200)] text-sm">
+                          ({doctor.reviews?.length || 0} recenzii)
                         </span>
                       </div>
+                      
+                      <Link
+                        to={`/doctors/${doctor._id}`}
+                        className="inline-block w-full py-2.5 px-4 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white text-center font-medium rounded-full transition-all duration-300"
+                      >
+                        Vezi Profil
+                      </Link>
                     </div>
-                    <Link
-                      to={`/doctors/${doctor._id}`}
-                      className="inline-block py-2 px-4 sm:py-2.5 sm:px-6 bg-[var(--primary-500)] text-[var(--text-50)] dark:bg-[var(--primary-600)] dark:text-[var(--text-950)] rounded-md text-base sm:text-lg font-medium hover:bg-[var(--primary-600)] dark:hover:bg-[var(--primary-700)] transition-colors"
-                      aria-label={`Vezi profilul doctorului ${doctor.name}`}
-                    >
-                      Vezi Profil
-                    </Link>
                   </div>
                 </div>
-              );
-            })}
-          </Slider>
-        ) : (
-          <p className="text-center text-lg sm:text-xl text-[var(--text-600)] dark:text-[var(--text-400)]">
-            Nu există doctori disponibili.
+              </div>
+            );
+          })}
+        </Slider>
+      ) : (
+        <div className="text-center py-12 bg-[var(--background-100)] dark:bg-[var(--background-900)] rounded-2xl">
+          <p className="text-lg text-[var(--text-600)] dark:text-[var(--text-300)]">
+            Nu există doctori disponibili momentan.
           </p>
-        )}
-      </div>
-    </section>
+        </div>
+      )}
+    </div>
   );
 }
 

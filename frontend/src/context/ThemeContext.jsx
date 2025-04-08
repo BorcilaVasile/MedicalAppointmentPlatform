@@ -13,11 +13,14 @@ export function ThemeProvider({ children }) {
   });
 
   useEffect(() => {
+    const root = document.documentElement;
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
+      root.setAttribute('data-theme', 'dracula');
       localStorage.setItem('theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
+      root.setAttribute('data-theme', 'emerald');
       localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);

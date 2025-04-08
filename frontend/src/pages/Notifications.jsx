@@ -11,8 +11,22 @@ function Notifications() {
   const { token } = useAuth();
 
   useEffect(() => {
+    // La prima încărcare a paginii, actualizăm numărul notificărilor și în navbar
+    window.dispatchEvent(new Event('notifications-updated'));
+    
     fetchNotifications();
   }, []);
+
+  // Debugging și actualizare UI pentru numărul de notificări necitite
+  useEffect(() => {
+    const unreadCount = notifications.filter(n => !n.read).length;
+    console.log('Notificări necitite:', unreadCount, notifications);
+    
+    // Actualizează titlul paginii cu numărul corect
+    document.title = unreadCount > 0 
+      ? `(${unreadCount}) Notificări - Elysium` 
+      : `Notificări - Elysium`;
+  }, [notifications]);
 
   const fetchNotifications = async () => {
     try {
@@ -39,7 +53,13 @@ function Notifications() {
           'Authorization': `Bearer ${token}`
         }
       });
-      fetchNotifications();
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notif => 
+          notif._id === id ? { ...notif, read: true } : notif
+        )
+      );
+      
+      window.dispatchEvent(new Event('notifications-updated'));
     } catch (error) {
       console.error('Error marking notification as read:', error);
       setError('Failed to mark notification as read');
@@ -53,7 +73,11 @@ function Notifications() {
           'Authorization': `Bearer ${token}`
         }
       });
-      fetchNotifications();
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notif => ({ ...notif, read: true }))
+      );
+      
+      window.dispatchEvent(new Event('notifications-updated'));
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
       setError('Failed to mark all notifications as read');
@@ -67,7 +91,16 @@ function Notifications() {
           'Authorization': `Bearer ${token}`
         }
       });
-      fetchNotifications();
+      
+      // Actualizăm starea local (eliminăm notificarea ștearsă)
+      setNotifications(prevNotifications => 
+        prevNotifications.filter(notif => notif._id !== id)
+      );
+      
+      // Declanșează un eveniment pentru a notifica alte componente
+      window.dispatchEvent(new Event('notifications-updated'));
+      
+      console.log('Notificarea a fost ștearsă cu succes');
     } catch (error) {
       console.error('Error deleting notification:', error);
       setError('Failed to delete notification');
@@ -81,7 +114,14 @@ function Notifications() {
           'Authorization': `Bearer ${token}`
         }
       });
-      fetchNotifications();
+      
+      // Actualizăm starea local (setăm un array gol)
+      setNotifications([]);
+      
+      // Declanșează un eveniment pentru a notifica alte componente
+      window.dispatchEvent(new Event('notifications-updated'));
+      
+      console.log('Toate notificările au fost șterse cu succes');
     } catch (error) {
       console.error('Error deleting all notifications:', error);
       setError('Failed to delete all notifications');

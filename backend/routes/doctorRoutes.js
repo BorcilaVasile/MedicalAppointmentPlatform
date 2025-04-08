@@ -216,13 +216,24 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
+    console.log(`Fetching doctor with id: ${req.params.id}`);
     const doctor = await User.findOne({ _id: req.params.id, role: 'doctor' })
       .select('-password')
       .populate('clinic', 'name address');
 
     if (!doctor) {
+      console.log(`Doctor with id ${req.params.id} not found`);
       return res.status(404).json({ message: 'Doctorul nu a fost găsit' });
     }
+
+    console.log('Doctor found:', {
+      id: doctor._id,
+      name: doctor.name,
+      specialty: doctor.specialty,
+      gender: doctor.gender,
+      hasImage: !!doctor.profilePicture,
+      clinic: doctor.clinic
+    });
 
     res.json(doctor);
   } catch (error) {

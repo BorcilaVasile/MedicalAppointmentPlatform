@@ -55,7 +55,7 @@ const About = () => {
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[var(--text-900)] dark:text-[var(--text-100)] mb-6">
               Despre Elysium
-            </h1>
+      </h1>
             <p className="text-xl text-[var(--text-700)] dark:text-[var(--text-300)] max-w-3xl mx-auto">
               Platforma noastră medicală conectează pacienții cu cei mai buni doctori și clinici, oferind o experiență completă de gestionare a sănătății.
             </p>
@@ -83,8 +83,8 @@ const About = () => {
               <p className="text-lg text-[var(--text-700)] dark:text-[var(--text-300)]">
                 Platforma noastră a fost creată pentru a elimina barierele dintre pacienți și furnizorii de servicii medicale, 
                 oferind un sistem integrat care simplifică procesul de programare, urmărire și gestionare a sănătății.
-              </p>
-            </div>
+          </p>
+        </div>
             <div className="space-y-4">
               <p className="text-lg text-[var(--text-700)] dark:text-[var(--text-300)]">
                 Prin tehnologie inovatoare și o abordare centrată pe utilizator, ne propunem să:
@@ -128,10 +128,10 @@ const About = () => {
               <div className="text-[var(--primary-500)] mb-4">{feature.icon}</div>
               <h3 className="text-xl font-semibold text-[var(--text-900)] dark:text-[var(--text-100)] mb-2">
                 {feature.title}
-              </h3>
+          </h3>
               <p className="text-[var(--text-700)] dark:text-[var(--text-300)]">
                 {feature.description}
-              </p>
+          </p>
             </motion.div>
           ))}
         </div>
@@ -180,8 +180,8 @@ const About = () => {
           </p>
           <div className="flex justify-center space-x-4">
             {!isAuthenticated && (
-              <a
-                href="/signup"
+        <a
+          href="/signup"
                 className="bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)] text-white px-8 py-3 rounded-lg text-lg font-semibold hover:opacity-90 transition-opacity"
               >
                 Înregistrare

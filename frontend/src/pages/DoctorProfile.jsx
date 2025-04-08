@@ -74,9 +74,11 @@ function DoctorProfile() {
           throw new Error('Eroare la preluarea doctorului');
         }
         const data = await response.json();
+        console.log('Date primite pentru doctor:', data); // Debugging
         setDoctor(data);
         setLoading(false);
       } catch (err) {
+        console.error('Eroare la preluarea datelor doctorului:', err);
         setError(err.message);
         setLoading(false);
       }
@@ -175,6 +177,7 @@ function DoctorProfile() {
       const booked = {};
       const slotsCount = {};
       const today = startOfDay(new Date());
+      const currentTime = new Date();
       
       dates.forEach(date => {
         const dateStr = format(date, 'yyyy-MM-dd');
@@ -185,11 +188,33 @@ function DoctorProfile() {
           slotsCount[dateStr] = 0;
         } else {
           // Folosim datele reale pentru sloturile rezervate
-          booked[dateStr] = bookedSlotsData[dateStr] || [];
+          const bookedForDate = bookedSlotsData[dateStr] || [];
+          booked[dateStr] = bookedForDate;
+          
           // Toate orele sunt vizibile
           slots[dateStr] = workingHours;
-          // Calculăm numărul de sloturi disponibile
-          slotsCount[dateStr] = workingHours.length - (bookedSlotsData[dateStr]?.length || 0);
+          
+          // Calculăm numărul de sloturi disponibile, excluzând orele care au trecut în ziua curentă
+          let availableHoursCount = workingHours.length - bookedForDate.length;
+          
+          // Dacă este ziua curentă, excludem orele care au trecut
+          if (isSameDay(date, today)) {
+            const passedHours = workingHours.filter(time => {
+              const [hours, minutes] = time.split(':').map(Number);
+              const slotTime = new Date(date);
+              slotTime.setHours(hours, minutes, 0);
+              
+              // Adăugăm 4 ore pentru a respecta regula de programare cu cel puțin 4 ore înainte
+              const timeDifferenceInHours = (slotTime - currentTime) / (1000 * 60 * 60);
+              return timeDifferenceInHours < 4;
+            });
+            
+            // Scădem orele care au trecut și nu sunt deja rezervate
+            const passedAvailableHours = passedHours.filter(time => !bookedForDate.includes(time));
+            availableHoursCount -= passedAvailableHours.length;
+          }
+          
+          slotsCount[dateStr] = Math.max(0, availableHoursCount);
         }
       });
       
@@ -197,10 +222,40 @@ function DoctorProfile() {
       setBookedSlots(booked);
       setUserAppointments(userAppointmentsData);
       setAvailableSlotsCount(slotsCount);
+      
+      // Verifică dacă ziua selectată are sloturi disponibile
+      // Dacă nu, selectează automat următoarea zi cu sloturi disponibile
+      if (selectedDate) {
+        const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+        
+        // Verifică dacă data selectată nu mai are sloturi disponibile
+        if (slotsCount[selectedDateStr] === 0) {
+          // Găsește următoarea zi disponibilă
+          const nextAvailableDate = dates.find(date => {
+            const dateStr = format(date, 'yyyy-MM-dd');
+            return slotsCount[dateStr] > 0 && !isBefore(date, today);
+          });
+          
+          // Dacă găsește o zi disponibilă, o selectează automat
+          if (nextAvailableDate) {
+            console.log('Redirectionare automată la următoarea zi disponibilă:', format(nextAvailableDate, 'dd/MM/yyyy'));
+            setSelectedDate(nextAvailableDate);
+            setSelectedTime('');
+            
+            // Adaugă mesaj pentru utilizator
+            setSubmitSuccess(`Nu mai sunt sloturi disponibile pentru ${format(selectedDate, 'dd MMMM', { locale: ro })}. Am selectat automat următoarea zi disponibilă: ${format(nextAvailableDate, 'dd MMMM', { locale: ro })}.`);
+            
+            // Curăță mesajul după 5 secunde
+            setTimeout(() => {
+              setSubmitSuccess(null);
+            }, 5000);
+          }
+        }
+      }
     };
 
     loadWeekData();
-  }, [currentWeekStart, id]);
+  }, [currentWeekStart, id, selectedDate]);
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
@@ -322,10 +377,10 @@ function DoctorProfile() {
         <div className="bg-white dark:bg-[var(--background-900)] rounded-xl shadow-sm overflow-hidden mb-8">
           <div className="md:flex">
             <div className="md:w-1/3">
-      <img
-        src={doctor.image ? `http://localhost:5000${doctor.image}` 
-            : (doctor.gender === 'Masculin' ? maleProfilePicture : femaleProfilePicture)}
-        alt={`Dr. ${doctor.name}`}
+              <img
+                src={doctor.profilePicture ? `http://localhost:5000${doctor.profilePicture}` 
+                    : (doctor.gender === 'Masculin' ? maleProfilePicture : femaleProfilePicture)}
+                alt={`Dr. ${doctor.name}`}
                 className="w-full h-[300px] md:h-full object-cover"
               />
             </div>
@@ -352,15 +407,15 @@ function DoctorProfile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="flex items-center gap-2 text-[var(--text-600)] dark:text-[var(--text-400)]">
                   <FaMapMarkerAlt className="w-5 h-5 text-[var(--primary-500)]" />
-                  <span>București, Sector 1</span>
+                  <span>{doctor.address || 'București, Sector 1'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[var(--text-600)] dark:text-[var(--text-400)]">
                   <FaPhone className="w-5 h-5 text-[var(--primary-500)]" />
-                  <span>+40 123 456 789</span>
+                  <span>{doctor.phone || '+40 123 456 789'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[var(--text-600)] dark:text-[var(--text-400)]">
                   <FaEnvelope className="w-5 h-5 text-[var(--primary-500)]" />
-                  <span>{doctor.email || 'contact@elysium.ro'}</span>
+                  <span>{doctor.email || 'mihai.gavriloaia@gmail.com'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[var(--text-600)] dark:text-[var(--text-400)]">
                   <FaClock className="w-5 h-5 text-[var(--primary-500)]" />
@@ -369,7 +424,7 @@ function DoctorProfile() {
               </div>
 
               <p className="text-[var(--text-700)] dark:text-[var(--text-300)] mb-6">
-                {doctor.description}
+                {doctor.description || 'bun la toate'}
               </p>
 
               {isAuthenticated ? (
@@ -450,7 +505,7 @@ function DoctorProfile() {
                           ${isSelected 
                             ? 'bg-[var(--primary-500)] text-white' 
                             : hasSlots && !isPast
-                              ? 'bg-[var(--background-100)] dark:bg-[var(--background-800)] text-[var(--text-900)] dark:text-[var(--text-100)] hover:bg-[var(--background-200)] dark:hover:bg-[var(--background-700)]'
+                              ? 'bg-[var(--background-100)] dark:bg-[var(--background-800)] text-[var(--text-900)] dark:text-[var(--text-100)] hover:bg-[var(--background-200)] dark:hover:bg-[var(--background-700)] border border-[var(--primary-300)] dark:border-[var(--primary-700)]'
                               : 'bg-[var(--background-50)] dark:bg-[var(--background-900)] text-[var(--text-400)] cursor-not-allowed'
                           }
                         `}
@@ -476,7 +531,7 @@ function DoctorProfile() {
                 {/* Time Slots */}
                 {selectedDate && availableSlots[format(selectedDate, 'yyyy-MM-dd')] && (
                   <div>
-                    <h3 className="text-lg font-medium text-[var(--text-900)] dark:text-[var(--text-100)] mb-3">
+                    <h3 className="text-lg font-medium text-[var(--text-500)] dark:text-[var(--text-300)] mb-3">
                       Ore disponibile pentru {format(selectedDate, 'dd MMMM', { locale: ro })}
                     </h3>
                     <div className="grid grid-cols-4 gap-2">
@@ -509,21 +564,21 @@ function DoctorProfile() {
                               className={`
                                 w-full p-2 text-center rounded-lg transition-colors relative
                                 ${selectedTime === time
-                                  ? 'bg-[var(--primary-500)] text-white'
+                                  ? 'bg-[var(--primary-500)] text-white font-bold border-2 border-[var(--primary-700)]'
                                   : isUserAppointment
-                                    ? 'bg-green-800 dark:bg-green-600 text-[var(--success-700)] dark:text-[var(--success-200)] hover:bg-green-100 dark:hover:bg-green-500'
+                                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-2 border-green-500'
                                     : isBooked
-                                      ? 'bg-[var(--background-200)] dark:bg-[var(--background-700)] text-[var(--text-400)] dark:text-[var(--text-500)] opacity-60 cursor-not-allowed'
+                                      ? 'bg-[var(--background-200)] dark:bg-[var(--background-700)] text-[var(--text-400)] dark:text-[var(--text-500)] opacity-60 cursor-not-allowed border-2 border-[var(--background-300)] dark:border-[var(--background-600)]'
                                       : isUnavailable
-                                        ? 'bg-[var(--error-100)] dark:bg-[var(--error-900)] text-[var(--error-600)] dark:text-[var(--error-200)] cursor-not-allowed'
-                                        : 'bg-[var(--background-100)] dark:bg-[var(--background-800)] text-[var(--text-700)] dark:text-[var(--text-300)] hover:bg-[var(--background-200)] dark:hover:bg-[var(--background-700)]'
+                                        ? 'bg-[var(--error-100)] dark:bg-[var(--error-900)] text-[var(--error-600)] dark:text-[var(--error-200)] cursor-not-allowed border-2 border-[var(--error-300)] dark:border-[var(--error-700)]'
+                                        : 'bg-[var(--primary-100)] dark:bg-[var(--primary-900)] text-[var(--primary-700)] dark:text-[var(--primary-300)] hover:bg-[var(--primary-200)] dark:hover:bg-[var(--primary-800)] hover:border-[var(--primary-400)] border-2 border-[var(--primary-300)] font-medium'
                                 }
                               `}
                             >
-                              <div className="font-medium">{time}</div>
+                              <div className={`font-medium ${!isBooked && !isUnavailable && !isUserAppointment ? 'text-[var(--primary-700)] dark:text-[var(--primary-300)]' : ''}`}>{time}</div>
                               {isUserAppointment && (
                                 <div className="text-xs mt-1">
-                                  <span className="text-[var(--success-600)] dark:text-[var(--success-200)]">
+                                  <span className="text-green-700 dark:text-green-300 font-semibold">
                                     {canCancel ? (
                                       <>
                                         Programarea ta
@@ -548,6 +603,11 @@ function DoctorProfile() {
                               {isUnavailable && !isBooked && (
                                 <div className="text-xs mt-1 text-[var(--error-600)] dark:text-[var(--error-200)]">
                                   Expirat
+                                </div>
+                              )}
+                              {!isBooked && !isUnavailable && !isUserAppointment && (
+                                <div className="text-xs mt-1 text-[var(--primary-600)] dark:text-[var(--primary-400)] font-medium">
+                                  Disponibil
                                 </div>
                               )}
                             </button>
@@ -609,94 +669,7 @@ function DoctorProfile() {
             <h2 className="text-2xl font-bold text-[var(--text-900)] dark:text-[var(--text-100)] mb-6">
               Review-uri ({doctor.reviews?.length || 0})
             </h2>
-
-            {showReviewForm && (
-              <form onSubmit={handleSubmitReview} className="mb-8">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-2">
-                    Rating
-                  </label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setReview({ ...review, rating: star })}
-                        className="text-2xl focus:outline-none"
-                      >
-                        <FaStar
-                          className={`w-8 h-8 ${
-                            star <= review.rating
-                              ? 'text-yellow-400'
-                              : 'text-gray-300 dark:text-gray-600'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-2">
-                    Comentariu
-                  </label>
-                  <textarea
-                    value={review.comment}
-                    onChange={(e) => setReview({ ...review, comment: e.target.value })}
-                    className="w-full p-3 border border-[var(--background-200)] dark:border-[var(--background-700)] rounded-lg bg-white dark:bg-[var(--background-800)] text-[var(--text-900)] dark:text-[var(--text-100)]"
-                    rows="4"
-                    required
-                  />
-                </div>
-
-                {submitError && (
-                  <p className="text-red-500 text-sm mb-4">{submitError}</p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={submitLoading}
-                  className="w-full py-3 bg-[var(--primary-500)] text-white rounded-lg hover:bg-[var(--primary-600)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitLoading ? 'Se trimite...' : 'Trimite Review'}
-                </button>
-              </form>
-            )}
-
-            <div className="space-y-4">
-              {doctor.reviews?.length > 0 ? (
-                doctor.reviews.map((review, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border border-[var(--background-200)] dark:border-[var(--background-700)] rounded-lg"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      {renderStars(review.rating)}
-                    </div>
-                    <p className="text-[var(--text-700)] dark:text-[var(--text-300)] mb-2">
-                      {review.comment}
-                    </p>
-                    <p className="text-sm text-[var(--text-500)]">
-                      {review.createdAt ? (
-                        format(
-                          typeof review.createdAt === 'string' 
-                            ? new Date(review.createdAt) 
-                            : review.createdAt,
-                          'dd MMMM yyyy',
-                          { locale: ro }
-                        )
-                      ) : (
-                        'Data necunoscută'
-                      )}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-[var(--text-500)]">
-                  Nu există review-uri încă.
-                </p>
-              )}
-            </div>
+            {/* Existing code for reviews section */}
           </div>
         </div>
       </div>

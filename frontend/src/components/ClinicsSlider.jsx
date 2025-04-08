@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import { FaMapMarkerAlt, FaPhoneAlt, FaClock } from 'react-icons/fa';
 
 // Setări pentru slider
 const clinicSliderSettings = {
   dots: true,
   infinite: true,
-  speed: 500,
+  speed: 700,
   slidesToShow: 3,
   slidesToScroll: 1,
   autoplay: true,
@@ -59,55 +60,89 @@ function ClinicsSlider() {
     fetchClinics();
   }, []);
 
+  // Ajustează setările slider-ului în funcție de numărul de clinici
+  const adjustedSliderSettings = {
+    ...clinicSliderSettings,
+    infinite: clinics.length > 1,
+    slidesToShow: Math.min(clinics.length, clinicSliderSettings.slidesToShow),
+  };
+
   return (
-    <section className="py-12 sm:py-16 bg-[var(--background-50)] dark:bg-[var(--background-950)] transition-colors">
-      <div className="container mx-auto px-4 sm:px-6">
-        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-8 sm:mb-12 text-[var(--text-800)] dark:text-[var(--text-200)]">
-          Clinicile Noastre
-        </h2>
-        {loading ? (
-          <p className="text-center text-lg sm:text-xl text-[var(--text-600)] dark:text-[var(--text-400)]">
-            Se încarcă clinicile...
-          </p>
-        ) : error ? (
-          <p className="text-center text-lg sm:text-xl text-[var(--accent-500)] dark:text-[var(--accent-600)]">
+    <div className="py-4">
+      {loading ? (
+        <div className="flex justify-center items-center py-16">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="w-10 h-10 rounded-full bg-[var(--secondary-200)] dark:bg-[var(--secondary-900)]"></div>
+            <div className="mt-4 h-4 w-24 bg-[var(--background-200)] dark:bg-[var(--background-700)] rounded"></div>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 px-4">
+          <p className="text-[var(--accent-600)] dark:text-[var(--accent-400)] text-lg font-medium">
             {error}
           </p>
-        ) : clinics.length > 0 ? (
-          <Slider {...clinicSliderSettings} className="relative mx-auto max-w-[1200px]">
-            {clinics.map((clinic) => (
-              <div key={clinic._id} className="px-2">
-                <div className="p-6 bg-[var(--background-100)] dark:bg-[var(--background-900)] rounded-lg shadow-md text-center h-full flex flex-col justify-between transition-transform hover:scale-105">
+          <p className="mt-2 text-[var(--text-500)]">Încercați să reîmprospătați pagina.</p>
+        </div>
+      ) : clinics.length > 0 ? (
+        <Slider {...adjustedSliderSettings} className="clinic-slider">
+          {clinics.map((clinic) => (
+            <div key={clinic._id} className="px-3 py-2">
+              <div className="group h-full flex flex-col overflow-hidden rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg bg-gradient-to-b from-[var(--background-50)] to-[var(--background-100)] dark:from-[var(--background-800)] dark:to-[var(--background-900)]">
+                <div className="relative overflow-hidden">
                   <img
                     src={`http://localhost:5000${clinic.image}`}
                     alt={clinic.name}
-                    className="w-full h-48 sm:h-56 object-cover rounded-md mb-4"
+                    className="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/400x300?text=Clinică';
+                    }}
                   />
-                  <div className="flex-1">
-                    <h3 className="text-xl sm:text-2xl font-semibold mb-2 text-[var(--text-800)] dark:text-[var(--text-200)]">
-                      {clinic.name}
-                    </h3>
-                    <p className="text-base sm:text-lg mb-2 text-[var(--text-700)] dark:text-[var(--text-300)]">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent h-24"></div>
+                </div>
+                
+                <div className="flex-1 p-5 flex flex-col">
+                  <h3 className="text-xl font-semibold mb-2 text-[var(--text-900)] dark:text-[var(--text-50)]">
+                    {clinic.name}
+                  </h3>
+                  
+                  <div className="flex items-start gap-2 mb-2">
+                    <FaMapMarkerAlt className="text-[var(--secondary-500)] dark:text-[var(--secondary-400)] mt-1 flex-shrink-0" />
+                    <p className="text-[var(--text-600)] dark:text-[var(--text-300)] text-sm">
                       {clinic.address}
                     </p>
                   </div>
-                  <Link
-                    to={`/clinics/${clinic._id}`}
-                    className="inline-block py-2 px-4 sm:py-2.5 sm:px-6 bg-[var(--primary-500)] text-[var(--text-50)] dark:bg-[var(--primary-600)] dark:text-[var(--text-950)] rounded-md text-base sm:text-lg font-medium hover:bg-[var(--primary-600)] dark:hover:bg-[var(--primary-700)] transition-colors"
-                  >
-                    Vezi Detalii
-                  </Link>
+                  
+                  {clinic.schedule && (
+                    <div className="flex items-start gap-2 mb-4">
+                      <FaClock className="text-[var(--secondary-500)] dark:text-[var(--secondary-400)] mt-1 flex-shrink-0" />
+                      <p className="text-[var(--text-600)] dark:text-[var(--text-300)] text-sm">
+                        {clinic.schedule}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-auto">
+                    <Link
+                      to={`/clinics/${clinic._id}`}
+                      className="inline-block w-full py-2.5 px-4 bg-[var(--secondary-600)] hover:bg-[var(--secondary-700)] text-white text-center font-medium rounded-full transition-all duration-300"
+                    >
+                      Vezi Detalii
+                    </Link>
+                  </div>
                 </div>
               </div>
-            ))}
-          </Slider>
-        ) : (
-          <p className="text-center text-lg sm:text-xl text-[var(--text-600)] dark:text-[var(--text-400)]">
-            Nu există clinici disponibile.
+            </div>
+          ))}
+        </Slider>
+      ) : (
+        <div className="text-center py-12 bg-[var(--background-100)] dark:bg-[var(--background-900)] rounded-2xl">
+          <p className="text-lg text-[var(--text-600)] dark:text-[var(--text-300)]">
+            Nu există clinici disponibile momentan.
           </p>
-        )}
-      </div>
-    </section>
+        </div>
+      )}
+    </div>
   );
 }
 
