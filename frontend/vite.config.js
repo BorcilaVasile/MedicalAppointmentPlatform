@@ -7,7 +7,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       external: [
-        'framer-motion',
         'react-slick',
         'slick-carousel',
         '@heroicons/react',
@@ -17,11 +16,15 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      'framer-motion',
       'react-slick',
       'slick-carousel',
       '@heroicons/react',
       '@heroicons/react/24/outline'
     ],
   },
+  resolve: {
+    alias: {
+      'framer-motion': 'framer-motion'
+    }
+  }
 })
