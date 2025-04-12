@@ -8,23 +8,20 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'react-slick',
-        'slick-carousel',
-        '@heroicons/react',
-        '@heroicons/react/24/outline'
+        'slick-carousel'
       ],
     },
   },
   optimizeDeps: {
     include: [
       'react-slick',
-      'slick-carousel',
-      '@heroicons/react',
-      '@heroicons/react/24/outline'
+      'slick-carousel'
     ],
   },
   resolve: {
     alias: {
-      'framer-motion': 'framer-motion'
+      'framer-motion': 'framer-motion',
+      '@heroicons/react/24/outline': '@heroicons/react/24/outline'
     }
   }
 })
