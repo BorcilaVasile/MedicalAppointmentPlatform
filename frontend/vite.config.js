@@ -5,15 +5,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    rollupOptions: {
-      external: ['react', 'react-dom'],
-      output: {
-        globals: {
-          react: 'React',
-          'react-dom': 'ReactDOM'
-        }
-      }
-    },
     commonjsOptions: {
       include: [/react-slick/, /slick-carousel/, /react/, /react-dom/],
       transformMixedEsModules: true
@@ -34,6 +25,10 @@ export default defineConfig({
     }
   },
   resolve: {
-    dedupe: ['@heroicons/react', 'react-slick', 'react', 'react-dom']
+    dedupe: ['@heroicons/react', 'react-slick', 'react', 'react-dom'],
+    alias: {
+      'react': 'react',
+      'react-dom': 'react-dom'
+    }
   }
 })
