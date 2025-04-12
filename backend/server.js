@@ -27,7 +27,13 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://your-frontend-url.vercel.app'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -48,12 +54,18 @@ app.get('/', (req, res) => {
 
 // Conectare la MongoDB
 mongoose
-  .connect(process.env.MONGO_URI, {
+  .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log('Conectat la MongoDB'))
-  .catch((err) => console.error('Eroare la conectarea la MongoDB:', err));
+  .then(() => {
+    console.log('Conectat la MongoDB Atlas');
+    console.log('MongoDB URI:', process.env.MONGODB_URI ? 'Setat' : 'Nesetat');
+  })
+  .catch((err) => {
+    console.error('Eroare la conectarea la MongoDB:', err);
+    process.exit(1); // Oprește aplicația în caz de eroare
+  });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -64,4 +76,5 @@ app.use((err, req, res, next) => {
 // Pornire server
 app.listen(PORT, () => {
   console.log(`Serverul rulează pe portul ${PORT}`);
+  console.log(`Mediul: ${process.env.NODE_ENV || 'development'}`);
 });
