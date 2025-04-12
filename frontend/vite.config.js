@@ -6,17 +6,19 @@ export default defineConfig({
   plugins: [react()],
   build: {
     commonjsOptions: {
-      include: [/react-slick/, /slick-carousel/],
+      include: [/react-slick/, /slick-carousel/, /react/, /react-dom/],
     },
   },
   optimizeDeps: {
     include: [
       'react-slick',
       'slick-carousel',
-      '@heroicons/react/24/outline'
+      '@heroicons/react/24/outline',
+      'react',
+      'react-dom'
     ],
   },
   resolve: {
-    dedupe: ['@heroicons/react', 'react-slick']
+    dedupe: ['@heroicons/react', 'react-slick', 'react', 'react-dom']
   }
 })
