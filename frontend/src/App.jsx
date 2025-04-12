@@ -21,9 +21,7 @@ import './App.css';
 import PrivateRoute from './components/PrivateRoute';
 
 // Configurare pentru medii diferite
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://medical-appointment-backend.onrender.com'  // URL-ul tău Render
-  : 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
   const location = useLocation();
