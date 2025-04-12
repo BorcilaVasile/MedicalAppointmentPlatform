@@ -5,11 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    rollupOptions: {
-      external: [
-        'react-slick',
-        'slick-carousel'
-      ],
+    commonjsOptions: {
+      include: [/react-slick/, /slick-carousel/],
     },
   },
   optimizeDeps: {
@@ -20,6 +17,6 @@ export default defineConfig({
     ],
   },
   resolve: {
-    dedupe: ['@heroicons/react']
+    dedupe: ['@heroicons/react', 'react-slick']
   }
 })
