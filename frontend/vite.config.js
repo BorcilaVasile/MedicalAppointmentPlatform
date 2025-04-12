@@ -10,7 +10,8 @@ export default defineConfig({
         'framer-motion',
         'react-slick',
         'slick-carousel',
-        '@heroicons/react'
+        '@heroicons/react',
+        '@heroicons/react/24/outline'
       ],
     },
   },
@@ -19,7 +20,8 @@ export default defineConfig({
       'framer-motion',
       'react-slick',
       'slick-carousel',
-      '@heroicons/react'
+      '@heroicons/react',
+      '@heroicons/react/24/outline'
     ],
   },
 })
