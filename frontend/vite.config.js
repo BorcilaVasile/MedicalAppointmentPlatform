@@ -6,10 +6,20 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      external: ['framer-motion', 'react-slick', 'slick-carousel'],
+      external: [
+        'framer-motion',
+        'react-slick',
+        'slick-carousel',
+        '@heroicons/react'
+      ],
     },
   },
   optimizeDeps: {
-    include: ['framer-motion', 'react-slick', 'slick-carousel'],
+    include: [
+      'framer-motion',
+      'react-slick',
+      'slick-carousel',
+      '@heroicons/react'
+    ],
   },
 })
