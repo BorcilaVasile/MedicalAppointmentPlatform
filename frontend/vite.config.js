@@ -7,6 +7,7 @@ export default defineConfig({
   build: {
     commonjsOptions: {
       include: [/react-slick/, /slick-carousel/, /react/, /react-dom/],
+      transformMixedEsModules: true
     },
   },
   optimizeDeps: {
@@ -17,6 +18,11 @@ export default defineConfig({
       'react',
       'react-dom'
     ],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis'
+      }
+    }
   },
   resolve: {
     dedupe: ['@heroicons/react', 'react-slick', 'react', 'react-dom']
