@@ -15,13 +15,11 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       'react-slick',
-      'slick-carousel'
+      'slick-carousel',
+      '@heroicons/react/24/outline'
     ],
   },
   resolve: {
-    alias: {
-      'framer-motion': 'framer-motion',
-      '@heroicons/react/24/outline': '@heroicons/react/24/outline'
-    }
+    dedupe: ['@heroicons/react']
   }
 })
