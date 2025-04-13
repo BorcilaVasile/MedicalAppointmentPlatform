@@ -65,5 +65,9 @@ export default defineConfig({
       'daisyui': 'daisyui',
       'react-icons': 'react-icons'
     }
+  },
+  define: {
+    'process.env': {},
+    global: 'globalThis'
   }
 })
