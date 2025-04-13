@@ -19,7 +19,9 @@ export default defineConfig({
         /react-icons/
       ],
       transformMixedEsModules: true
-    }
+    },
+    sourcemap: true,
+    minify: false
   },
   optimizeDeps: {
     include: [
@@ -55,7 +57,9 @@ export default defineConfig({
     ]
   },
   define: {
-    'process.env': {},
+    'process.env': {
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
+    },
     global: 'globalThis'
   }
 })
