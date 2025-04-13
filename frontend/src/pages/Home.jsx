@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaUserMd, FaCalendarAlt, FaClinicMedical, FaHeartbeat, FaBaby, FaBone, FaAllergies, FaArrowRight } from 'react-icons/fa';
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
+import { useKeenSlider } from 'keen-slider/react';
+import 'keen-slider/keen-slider.min.css';
 import clinic from '../assets/clinic.jpg';
 import doctorsImg from '../assets/doctors.jpg';
 import pacients from '../assets/pacients.jpg';
@@ -61,39 +60,41 @@ const features = [
 function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const { isDarkMode } = useTheme();
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev === carouselImages.length - 1 ? 0 : prev + 1));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const [sliderRef, instanceRef] = useKeenSlider({
+    initial: 0,
+    slideChanged(slider) {
+      setCurrentSlide(slider.track.details.rel);
+    },
+    loop: true,
+    mode: "free-snap",
+    slides: {
+      perView: 1,
+      spacing: 15,
+    },
+  });
 
   const goToSlide = (index) => {
-    setCurrentSlide(index);
+    instanceRef.current?.moveToIdx(index);
   };
 
   return (
     <div className="min-h-screen bg-[var(--background-50)] dark:bg-[var(--background-50)]">
       {/* Hero Section cu Carusel */}
       <section className="relative w-full h-[calc(100vh-5rem)] overflow-hidden">
-        {carouselImages.map((image, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1500 ease-in-out ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <img
-              src={image}
-              alt={`Slide ${index + 1}`}
-              className="w-full h-full object-cover transition-transform duration-[2500ms] ease-out transform scale-105 filter brightness-[0.85]"
-              style={{
-                transform: index === currentSlide ? 'scale(1.00)' : 'scale(1.05)'
-              }}
-            />
-          </div>
-        ))}
+        <div ref={sliderRef} className="keen-slider h-full">
+          {carouselImages.map((image, index) => (
+            <div key={index} className="keen-slider__slide h-full">
+              <img
+                src={image}
+                alt={`Slide ${index + 1}`}
+                className="w-full h-full object-cover transition-transform duration-[2500ms] ease-out transform scale-105 filter brightness-[0.85]"
+                style={{
+                  transform: currentSlide === index ? 'scale(1.00)' : 'scale(1.05)'
+                }}
+              />
+            </div>
+          ))}
+        </div>
         
         {/* Overlay cu text */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/40 flex items-center justify-center">
@@ -144,7 +145,7 @@ function Home() {
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentSlide
+                currentSlide === index
                   ? 'bg-white w-10 transform scale-100'
                   : 'bg-white/50 hover:bg-white/75 transform scale-90'
               }`}

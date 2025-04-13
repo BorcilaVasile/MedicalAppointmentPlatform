@@ -7,8 +7,7 @@ export default defineConfig({
   build: {
     commonjsOptions: {
       include: [
-        /react-slick/,
-        /slick-carousel/,
+        /keen-slider/,
         /react/,
         /react-dom/,
         /react-router-dom/,
@@ -24,8 +23,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      'react-slick',
-      'slick-carousel',
+      'keen-slider',
       '@heroicons/react/24/outline',
       'react',
       'react-dom',
@@ -45,7 +43,7 @@ export default defineConfig({
   resolve: {
     dedupe: [
       '@heroicons/react',
-      'react-slick',
+      'keen-slider',
       'react',
       'react-dom',
       'react-router-dom',
