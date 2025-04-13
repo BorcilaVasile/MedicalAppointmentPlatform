@@ -18,11 +18,11 @@ export default defineConfig({
         /daisyui/,
         /react-icons/
       ],
-      transformMixedEsModules: true,
-      esmExternals: true
+      transformMixedEsModules: true
     },
     rollupOptions: {
       output: {
+        format: 'es',
         manualChunks: {
           vendor: [
             'react',
@@ -83,6 +83,8 @@ export default defineConfig({
   },
   define: {
     'process.env': {},
-    global: 'globalThis'
+    global: 'globalThis',
+    module: {},
+    'global.module': {},
   }
 })
