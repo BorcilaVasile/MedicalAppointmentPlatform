@@ -16,9 +16,14 @@ export default defineConfig({
         /date-fns/,
         /axios/,
         /daisyui/,
-        /react-icons/
+        /react-icons/,
+        /scheduler/
       ],
-      transformMixedEsModules: true
+      transformMixedEsModules: true,
+      dynamicRequireTargets: [
+        'node_modules/scheduler/index.js',
+        'node_modules/scheduler/cjs/*.js'
+      ]
     },
     sourcemap: true,
     minify: false
@@ -34,7 +39,8 @@ export default defineConfig({
       'date-fns',
       'axios',
       'daisyui',
-      'react-icons'
+      'react-icons',
+      'scheduler'
     ],
     esbuildOptions: {
       define: {
@@ -43,6 +49,9 @@ export default defineConfig({
     }
   },
   resolve: {
+    alias: {
+      'scheduler': 'scheduler/cjs/scheduler.production.min.js'
+    },
     dedupe: [
       '@heroicons/react',
       'keen-slider',
@@ -53,12 +62,13 @@ export default defineConfig({
       'date-fns',
       'axios',
       'daisyui',
-      'react-icons'
+      'react-icons',
+      'scheduler'
     ]
   },
   define: {
     'process.env': {
-      NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
+      NODE_ENV: JSON.stringify('production')
     },
     global: 'globalThis'
   }
