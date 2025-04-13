@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {},
   },
-  plugins: [require("daisyui")],
+  plugins: [(await import("daisyui")).default],
   daisyui: {
     themes: ["light", "dark"],
   },
