@@ -18,8 +18,25 @@ export default defineConfig({
         /daisyui/,
         /react-icons/
       ],
-      transformMixedEsModules: true
+      transformMixedEsModules: true,
+      esmExternals: true
     },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            'framer-motion',
+            'date-fns',
+            'axios',
+            'daisyui',
+            'react-icons'
+          ]
+        }
+      }
+    }
   },
   optimizeDeps: {
     include: [

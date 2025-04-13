@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "daisyui": "^5.0.15",
-    "date-fns": "^4.1.0",
-    "framer-motion": "^12.6.3"
-  }
-}
