@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useKeenSlider } from 'keen-slider/react';
 import 'keen-slider/keen-slider.min.css';
-import maleProfilePicture from '../assets/male_profile_picture.png';
-import femaleProfilePicture from '../assets/female_profile_picture.png';
+import apiClient, { getImageUrl } from '../config/api';
+import { FaUserMd, FaHospital, FaCalendar } from 'react-icons/fa';
 
 // Funcții ajutătoare
 const calculateAverageRating = (reviews) => {
@@ -58,15 +58,11 @@ function DoctorsSlider() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/doctors');
-        if (!response.ok) {
-          throw new Error('Nu s-au putut încărca medicii');
-        }
-        const data = await response.json();
-        setDoctors(data);
+        const response = await apiClient.get('/api/doctors');
+        setDoctors(response.data);
         setLoading(false);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'Nu s-au putut încărca doctorii');
         setLoading(false);
       }
     };
@@ -84,18 +80,30 @@ function DoctorsSlider() {
           <div key={doctor._id} className="keen-slider__slide">
             <div className="bg-white rounded-lg shadow-lg overflow-hidden mx-2">
               <img
-                src={doctor.gender === 'M' ? maleProfilePicture : femaleProfilePicture}
+                src={getImageUrl(doctor.profilePicture) || '/default-doctor.jpg'}
                 alt={doctor.name}
                 className="w-full h-48 object-cover"
               />
               <div className="p-4">
                 <h3 className="text-xl font-semibold">{doctor.name}</h3>
-                <p className="text-gray-600">{doctor.specialization}</p>
-                <div className="mt-2">
-                  {renderStars(calculateAverageRating(doctor.reviews))}
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center text-gray-600">
+                    <FaUserMd className="mr-2" />
+                    <span>{doctor.specialization}</span>
+                  </div>
+                  {doctor.clinic && (
+                    <div className="flex items-center text-gray-600">
+                      <FaHospital className="mr-2" />
+                      <span>{doctor.clinic.name}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center text-gray-600">
+                    <FaCalendar className="mr-2" />
+                    <span>{doctor.availability || 'Program flexibil'}</span>
+                  </div>
                 </div>
                 <Link
-                  to={`/doctor/${doctor._id}`}
+                  to={`/doctors/${doctor._id}`}
                   className="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
                 >
                   Vezi profil

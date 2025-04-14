@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useKeenSlider } from 'keen-slider/react';
 import 'keen-slider/keen-slider.min.css';
 import { FaMapMarkerAlt, FaPhoneAlt, FaClock } from 'react-icons/fa';
+import apiClient from '../config/api';
 
 function ClinicsSlider() {
   const [clinics, setClinics] = useState([]);
@@ -35,15 +36,11 @@ function ClinicsSlider() {
   useEffect(() => {
     const fetchClinics = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/clinics');
-        if (!response.ok) {
-          throw new Error('Nu s-au putut încărca clinicile');
-        }
-        const data = await response.json();
-        setClinics(data);
+        const response = await apiClient.get('/api/clinics');
+        setClinics(response.data);
         setLoading(false);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'Nu s-au putut încărca clinicile');
         setLoading(false);
       }
     };

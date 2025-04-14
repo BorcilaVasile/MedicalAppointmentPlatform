@@ -4,6 +4,13 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:50
 // Create axios instance with default config
 import axios from 'axios';
 
+// Helper function to get full image URL
+export const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  return `${API_BASE_URL}${path}`;
+};
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -21,6 +28,20 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add a response interceptor to handle errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );
