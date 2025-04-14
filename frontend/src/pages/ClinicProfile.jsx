@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaMapMarkerAlt, FaPhone, FaClock, FaCalendar } from 'react-icons/fa';
-import clinicDefaultImage from '../assets/clinic-default.jpg';
 import apiClient, { getImageUrl } from '../config/api';
 
 function ClinicProfile() {
@@ -73,7 +72,7 @@ function ClinicProfile() {
       {/* Hero Section */}
       <div className="relative h-[400px]">
         <img
-          src={clinic.image ? getImageUrl(clinic.image) : clinicDefaultImage}
+          src={clinic.image ? getImageUrl(clinic.image) : '/default-clinic.jpg'}
           alt={clinic.name}
           className="w-full h-full object-cover"
         />
@@ -149,7 +148,7 @@ function ClinicProfile() {
                   >
                     <div className="flex items-center gap-4">
                       <img
-                        src={doctor.image ? getImageUrl(doctor.image) : clinicDefaultImage}
+                        src={doctor.image ? getImageUrl(doctor.image) : '/default-doctor.jpg'}
                         alt={doctor.name}
                         className="w-16 h-16 rounded-full object-cover"
                       />

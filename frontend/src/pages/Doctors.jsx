@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import maleProfilePicture from '../assets/male_profile_picture.png';
-import femaleProfilePicture from '../assets/female_profile_picture.png';
-import { FaStar, FaSearch, FaFilter, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaMapMarkerAlt, FaUserMd } from 'react-icons/fa';
 import apiClient, { getImageUrl } from '../config/api';
+import { FaStar, FaFilter, FaTimes } from 'react-icons/fa';
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);

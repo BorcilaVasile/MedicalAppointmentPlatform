@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import maleProfilePicture from '../assets/male_profile_picture.png';
-import femaleProfilePicture from '../assets/female_profile_picture.png';
-import { FaStar, FaStarHalf, FaCalendar, FaClock, FaMapMarkerAlt, FaPhone, FaEnvelope, FaFileMedical } from 'react-icons/fa';
+import { FaStar, FaCalendar, FaHospital, FaUserMd, FaClock, FaMapMarkerAlt, FaPhone, FaEnvelope, FaFileMedical } from 'react-icons/fa';
 import { format, addDays, startOfWeek, isSameDay, addWeeks, subWeeks, isBefore, startOfDay } from 'date-fns';
 import { ro } from 'date-fns/locale';
+import apiClient, { getImageUrl } from '../config/api';
 
 function DoctorProfile() {
   const { id } = useParams();
@@ -67,24 +66,39 @@ function DoctorProfile() {
 
   // Fetch doctor data
   useEffect(() => {
-    const fetchDoctor = async () => {
+    const fetchDoctorData = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/doctors/${id}`);
-        if (!response.ok) {
-          throw new Error('Eroare la preluarea doctorului');
-        }
-        const data = await response.json();
-        console.log('Date primite pentru doctor:', data); // Debugging
-        setDoctor(data);
+        const response = await apiClient.get(`/api/doctors/${id}`);
+        setDoctor(response.data);
         setLoading(false);
-      } catch (err) {
-        console.error('Eroare la preluarea datelor doctorului:', err);
-        setError(err.message);
+      } catch (error) {
+        console.error('Error fetching doctor data:', error);
+        setError('Failed to fetch doctor data');
         setLoading(false);
       }
     };
 
-    fetchDoctor();
+    const fetchAppointments = async () => {
+      try {
+        const response = await apiClient.get(`/api/appointments/doctor/${id}`);
+        setUserAppointments(response.data);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
+
+    const fetchReviews = async () => {
+      try {
+        const response = await apiClient.get(`/api/reviews/doctor/${id}`);
+        setDoctor(prevDoctor => ({ ...prevDoctor, reviews: response.data }));
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      }
+    };
+
+    fetchDoctorData();
+    fetchAppointments();
+    fetchReviews();
   }, [id]);
 
   // Funcție pentru navigarea între săptămâni
@@ -99,8 +113,8 @@ function DoctorProfile() {
   const fetchBookedSlots = async (startDate) => {
     try {
       const endDate = format(addDays(startDate, 6), 'yyyy-MM-dd');
-      const response = await fetch(
-        `http://localhost:5000/api/doctors/${id}/appointments/slots?startDate=${format(startDate, 'yyyy-MM-dd')}&endDate=${endDate}`,
+      const response = await apiClient.get(
+        `/api/doctors/${id}/appointments/slots?startDate=${format(startDate, 'yyyy-MM-dd')}&endDate=${endDate}`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -131,10 +145,9 @@ function DoctorProfile() {
 
     setCancelLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/doctors/${id}/appointments/${appointmentId}/cancel`,
+      const response = await apiClient.post(
+        `/api/doctors/${id}/appointments/${appointmentId}/cancel`,
         {
-          method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -268,21 +281,13 @@ function DoctorProfile() {
     setSubmitError(null);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/doctors/${id}/reviews`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(review)
+      const response = await apiClient.post('/api/reviews', {
+        doctorId: id,
+        rating: review.rating,
+        comment: review.comment
       });
 
-      if (!response.ok) {
-        throw new Error('Eroare la adăugarea review-ului');
-      }
-
-      const updatedDoctor = await response.json();
-      setDoctor(updatedDoctor);
+      setDoctor(prevDoctor => ({ ...prevDoctor, reviews: [...prevDoctor.reviews, response.data] }));
       setShowReviewForm(false);
       setReview({ rating: 5, comment: '' });
     } catch (err) {
@@ -309,25 +314,12 @@ function DoctorProfile() {
     setSubmitSuccess(null);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/doctors/${id}/appointments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          date: format(selectedDate, 'yyyy-MM-dd'),
-          time: selectedTime,
-          reason: reason
-        })
+      const response = await apiClient.post('/api/appointments', {
+        doctorId: id,
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        time: selectedTime,
+        reason: reason
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Eroare la crearea programării');
-      }
-
-      const data = await response.json();
 
       // Reîncarcă datele programărilor
       const { bookedSlots: newBookedSlots, userAppointments: newUserAppointments } = 
@@ -340,7 +332,7 @@ function DoctorProfile() {
       setSelectedDate(new Date());
       setSelectedTime('');
       setReason('');
-      setSubmitSuccess(data.message);
+      setSubmitSuccess(response.data.message);
       setSubmitError(null);
     } catch (err) {
       setSubmitError(err.message);
@@ -378,10 +370,9 @@ function DoctorProfile() {
           <div className="md:flex">
             <div className="md:w-1/3">
               <img
-                src={doctor.profilePicture ? `http://localhost:5000${doctor.profilePicture}` 
-                    : (doctor.gender === 'Masculin' ? maleProfilePicture : femaleProfilePicture)}
-                alt={`Dr. ${doctor.name}`}
-                className="w-full h-[300px] md:h-full object-cover"
+                src={doctor.profilePicture ? getImageUrl(doctor.profilePicture) : '/default-doctor.jpg'}
+                alt={`${doctor.firstName} ${doctor.lastName}`}
+                className="w-full h-full object-cover rounded-lg"
               />
             </div>
             <div className="p-6 md:w-2/3">
