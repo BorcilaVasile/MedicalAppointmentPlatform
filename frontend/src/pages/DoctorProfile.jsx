@@ -110,30 +110,19 @@ function DoctorProfile() {
   };
 
   // Funcție pentru a prelua programările pentru o săptămână
-  const fetchBookedSlots = async (startDate) => {
+  const fetchBookedSlots = async (weekStart) => {
     try {
-      const endDate = format(addDays(startDate, 6), 'yyyy-MM-dd');
-      const response = await apiClient.get(
-        `/api/doctors/${id}/appointments/slots?startDate=${format(startDate, 'yyyy-MM-dd')}&endDate=${endDate}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+      const weekEnd = addDays(weekStart, 6);
+      const response = await apiClient.get(`/api/appointments/slots/${id}`, {
+        params: {
+          startDate: format(weekStart, 'yyyy-MM-dd'),
+          endDate: format(weekEnd, 'yyyy-MM-dd')
         }
-      );
-      
-      if (!response.ok) {
-        throw new Error('Eroare la preluarea programărilor');
-      }
-      
-      const data = await response.json();
-      return {
-        bookedSlots: data.bookedSlots,
-        userAppointments: data.userAppointments
-      };
+      });
+      return response.data;
     } catch (error) {
       console.error('Eroare la preluarea programărilor:', error);
-      return { bookedSlots: {}, userAppointments: {} };
+      throw new Error('Eroare la preluarea programărilor');
     }
   };
 

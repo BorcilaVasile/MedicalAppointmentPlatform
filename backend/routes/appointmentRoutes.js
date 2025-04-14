@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Appointment = require('../models/Appointment');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { format } = require('date-fns');
 
@@ -16,6 +17,59 @@ router.get('/doctor/:doctorId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching appointments:', error);
     res.status(500).json({ message: 'Error fetching appointments' });
+  }
+});
+
+// GET: Preia sloturile rezervate pentru un doctor într-un interval de date
+router.get('/slots/:doctorId', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const doctorId = req.params.doctorId;
+
+    // Verifică dacă doctorul există
+    const doctor = await User.findOne({ _id: doctorId, role: 'doctor' });
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctorul nu a fost găsit' });
+    }
+
+    // Găsește toate programările în intervalul specificat
+    const appointments = await Appointment.find({
+      doctor: doctorId,
+      date: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      },
+      status: { $ne: 'cancelled' }
+    });
+
+    // Organizează programările pe zile
+    const bookedSlots = {};
+    const userAppointments = {};
+    
+    appointments.forEach(appointment => {
+      const dateStr = format(appointment.date, 'yyyy-MM-dd');
+      
+      // Inițializează arrays/objects dacă nu există
+      if (!bookedSlots[dateStr]) {
+        bookedSlots[dateStr] = [];
+      }
+      if (!userAppointments[dateStr]) {
+        userAppointments[dateStr] = {};
+      }
+
+      // Adaugă timpul în sloturile rezervate
+      bookedSlots[dateStr].push(appointment.time);
+      
+      // Verifică dacă programarea aparține utilizatorului curent
+      if (appointment.patient && appointment.patient.toString() === req.user?.id) {
+        userAppointments[dateStr][appointment.time] = appointment._id.toString();
+      }
+    });
+
+    res.json({ bookedSlots, userAppointments });
+  } catch (error) {
+    console.error('Error fetching booked slots:', error);
+    res.status(500).json({ message: 'Error fetching booked slots' });
   }
 });
 
