@@ -13,8 +13,8 @@ const adminMiddleware = (req, res, next) => {
   }
 };
 
-// GET: Preia toate clinicile
-router.get('/', async (req, res) => {
+// Get all clinics with pagination
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -35,27 +35,30 @@ router.get('/', async (req, res) => {
       page,
       pages: Math.ceil(total / limit)
     });
-  } catch (err) {
-    console.error('Error fetching clinics:', err);
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error('Error fetching clinics:', error);
+    res.status(500).json({ message: 'Error fetching clinics', error: error.message });
   }
 });
 
-// GET: Preia o clinică specifică după ID
-router.get('/:id', async (req, res) => {
+// Get clinic by ID
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const clinic = await Clinic.findById(req.params.id).populate('doctors');
+    const clinic = await Clinic.findById(req.params.id)
+      .populate('doctors', 'name specialty');
+    
     if (!clinic) {
       return res.status(404).json({ message: 'Clinic not found' });
     }
+    
     res.json(clinic);
-  } catch (err) {
-    console.error('Error fetching clinic:', err);
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error('Error fetching clinic:', error);
+    res.status(500).json({ message: 'Error fetching clinic', error: error.message });
   }
 });
 
-// GET: Preia toți doctorii asociați cu o clinică
+// Get all doctors associated with a clinic
 router.get('/:id/doctors', async (req, res) => {
   try {
     const doctors = await Doctor.find({ clinic: req.params.id }).select('-password');
@@ -65,8 +68,8 @@ router.get('/:id/doctors', async (req, res) => {
   }
 });
 
-// Creează o clinică nouă (doar admin)
-router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
+// Create new clinic
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const { name, address, phone, description, image } = req.body;
 
@@ -78,44 +81,47 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
       image
     });
 
-    const newClinic = await clinic.save();
-    res.status(201).json(newClinic);
-  } catch (err) {
-    console.error('Error creating clinic:', err);
-    res.status(400).json({ message: err.message });
+    const savedClinic = await clinic.save();
+    res.status(201).json(savedClinic);
+  } catch (error) {
+    console.error('Error creating clinic:', error);
+    res.status(500).json({ message: 'Error creating clinic', error: error.message });
   }
 });
 
-// Actualizează o clinică (doar admin)
-router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+// Update clinic
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const clinic = await Clinic.findById(req.params.id);
+    const clinic = await Clinic.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    ).populate('doctors', 'name specialty');
+
     if (!clinic) {
       return res.status(404).json({ message: 'Clinic not found' });
     }
 
-    Object.assign(clinic, req.body);
-    const updatedClinic = await clinic.save();
-    res.json(updatedClinic);
-  } catch (err) {
-    console.error('Error updating clinic:', err);
-    res.status(400).json({ message: err.message });
+    res.json(clinic);
+  } catch (error) {
+    console.error('Error updating clinic:', error);
+    res.status(500).json({ message: 'Error updating clinic', error: error.message });
   }
 });
 
-// Șterge o clinică (doar admin)
-router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+// Delete clinic
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const clinic = await Clinic.findById(req.params.id);
+    const clinic = await Clinic.findByIdAndDelete(req.params.id);
+    
     if (!clinic) {
       return res.status(404).json({ message: 'Clinic not found' });
     }
-
-    await clinic.remove();
+    
     res.json({ message: 'Clinic deleted successfully' });
-  } catch (err) {
-    console.error('Error deleting clinic:', err);
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error('Error deleting clinic:', error);
+    res.status(500).json({ message: 'Error deleting clinic', error: error.message });
   }
 });
 
