@@ -30,9 +30,11 @@ if (!fs.existsSync(uploadsDir)) {
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://your-frontend-url.vercel.app'
+    'https://medical-appointment-platform.vercel.app'
   ],
-  credentials: true
+  credentials: true, 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

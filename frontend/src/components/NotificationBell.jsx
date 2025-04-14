@@ -3,6 +3,8 @@ import { BellIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/backend';
+
 function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +27,7 @@ function NotificationBell() {
       setIsLoading(true);
       console.log('Fetching notifications with token:', token);
       
-      const response = await axios.get('http://localhost:5000/api/notifications/', {
+      const response = await axios.get(`${API_BASE_URL}/api/notifications/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -56,7 +58,7 @@ function NotificationBell() {
 
   const markAsRead = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/api/notifications/${id}/read`, {}, {
+      await axios.put(`${API_BASE_URL}/api/notifications/${id}/read`, {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -70,7 +72,7 @@ function NotificationBell() {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put('http://localhost:5000/api/notifications/read-all', {}, {
+      await axios.put(`${API_BASE_URL}/api/notifications/read-all`, {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

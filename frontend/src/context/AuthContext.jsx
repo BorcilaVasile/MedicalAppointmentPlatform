@@ -2,6 +2,8 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/backend';
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -18,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       if (storedToken && storedRole) {
         try {
           // Verify token by making a request to the backend
-          const response = await axios.get('http://localhost:5000/api/auth/me', {
+          const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
             headers: {
               'Authorization': `Bearer ${storedToken}`
             }
