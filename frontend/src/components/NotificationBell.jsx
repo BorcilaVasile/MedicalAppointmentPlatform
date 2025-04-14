@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BellIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/backend';
+import apiClient from '../config/api';
 
 function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
@@ -27,11 +25,7 @@ function NotificationBell() {
       setIsLoading(true);
       console.log('Fetching notifications with token:', token);
       
-      const response = await axios.get(`${API_BASE_URL}/api/notifications/`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await apiClient.get('/api/notifications/');
       
       console.log('Notifications response:', response.data);
       
@@ -58,11 +52,7 @@ function NotificationBell() {
 
   const markAsRead = async (id) => {
     try {
-      await axios.put(`${API_BASE_URL}/api/notifications/${id}/read`, {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      await apiClient.put(`/api/notifications/${id}/read`);
       fetchNotifications();
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -72,11 +62,7 @@ function NotificationBell() {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put(`${API_BASE_URL}/api/notifications/read-all`, {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      await apiClient.put('/api/notifications/read-all');
       fetchNotifications();
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
