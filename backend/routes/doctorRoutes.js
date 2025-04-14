@@ -654,7 +654,22 @@ router.get('/:id/appointments/slots', auth, async (req, res) => {
   }
 });
 
-// Get all doctors with pagination
+// Get all doctors with pagination (public route)
+router.get('/public', async (req, res) => {
+  try {
+    const doctors = await User.find({ role: 'doctor' })
+      .select('-password')
+      .populate('clinic', 'name address')
+      .sort({ createdAt: -1 });
+
+    res.json(doctors);
+  } catch (error) {
+    console.error('Eroare la preluarea doctorilor:', error);
+    res.status(500).json({ message: 'Eroare la preluarea doctorilor' });
+  }
+});
+
+// Get all doctors with pagination (admin route)
 router.get('/', auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;

@@ -20,12 +20,20 @@ const ClinicsList = ({ onRefresh }) => {
     try {
       setLoading(true);
       const response = await apiClient.get(`/api/clinics?page=${page}&limit=${ITEMS_PER_PAGE}`);
+      
+      // Check if response has the expected structure
+      if (!response.data || !Array.isArray(response.data.clinics)) {
+        throw new Error('Invalid response format from server');
+      }
+
       setClinics(response.data.clinics);
       setTotalClinics(response.data.total);
       setError('');
     } catch (err) {
       console.error('Error fetching clinics:', err);
-      setError('Failed to fetch clinics');
+      setError(err.response?.data?.message || err.message || 'Failed to fetch clinics');
+      setClinics([]);
+      setTotalClinics(0);
     } finally {
       setLoading(false);
     }
