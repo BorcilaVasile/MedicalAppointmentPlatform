@@ -26,20 +26,19 @@ const referralSchema = new mongoose.Schema({
 });
 
 const appointmentSchema = new mongoose.Schema({
+  doctor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   patient: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  doctor: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Doctor',
-    required: true
-  },
   clinic: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Clinic',
-    required: true
+    ref: 'Clinic'
   },
   date: {
     type: Date,
@@ -49,18 +48,17 @@ const appointmentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
-    default: 'confirmed'
-  },
   reason: {
     type: String,
     required: true
   },
-  diagnosis: {
+  status: {
     type: String,
-    default: null
+    enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+    default: 'pending'
+  },
+  diagnosis: {
+    type: String
   },
   referral: {
     type: referralSchema,
