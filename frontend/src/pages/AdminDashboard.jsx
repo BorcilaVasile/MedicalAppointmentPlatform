@@ -10,13 +10,11 @@ import { apiClient } from '../config/api';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [stats, setStats] = useState(null);
-  const [doctorStats, setDoctorStats] = useState(null);
-  const [activityStats, setActivityStats] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddDoctorModalOpen, setIsAddDoctorModalOpen] = useState(false);
-  const { token, userRole } = useAuth();
+  const { userRole } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,38 +22,29 @@ const AdminDashboard = () => {
       navigate('/');
       return;
     }
-    fetchStats();
-    fetchDoctorStats();
-    fetchActivityStats();
+    fetchDashboardData();
   }, [userRole, navigate]);
 
-  const fetchStats = async () => {
+  const fetchDashboardData = async () => {
     try {
-      const response = await apiClient.get('/api/admin/stats');
-      setStats(response.data);
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-      setError('Failed to fetch statistics');
-    }
-  };
+      setLoading(true);
+      const [statsResponse, doctorStatsResponse, activityStatsResponse] = await Promise.all([
+        apiClient.get('/api/admin/stats'),
+        apiClient.get('/api/admin/stats/doctors'),
+        apiClient.get('/api/admin/stats/activity')
+      ]);
 
-  const fetchDoctorStats = async () => {
-    try {
-      const response = await apiClient.get('/api/admin/stats/doctors');
-      setDoctorStats(response.data);
+      setDashboardData({
+        stats: statsResponse.data,
+        doctorStats: doctorStatsResponse.data,
+        activityStats: activityStatsResponse.data
+      });
+      setError(null);
     } catch (err) {
-      console.error('Error fetching doctor stats:', err);
-      setError('Failed to fetch doctor statistics');
-    }
-  };
-
-  const fetchActivityStats = async () => {
-    try {
-      const response = await apiClient.get('/api/admin/stats/activity');
-      setActivityStats(response.data);
-    } catch (err) {
-      console.error('Error fetching activity stats:', err);
-      setError('Failed to fetch activity statistics');
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to fetch dashboard data');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -149,14 +138,14 @@ const AdminDashboard = () => {
 
         {/* Content */}
         <div className="space-y-6">
-          {activeTab === 'overview' && stats && activityStats && (
+          {activeTab === 'overview' && dashboardData && (
             <>
               {/* Basic Stats */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Total Patients" value={stats.users} icon={FaUsers} />
-                <StatCard title="Total Doctors" value={stats.doctors} icon={FaUserMd} />
-                <StatCard title="Total Clinics" value={stats.clinics} icon={FaHospital} />
-                <StatCard title="Total Appointments" value={stats.appointments} icon={FaCalendarCheck} />
+                <StatCard title="Total Patients" value={dashboardData.stats.users} icon={FaUsers} />
+                <StatCard title="Total Doctors" value={dashboardData.stats.doctors} icon={FaUserMd} />
+                <StatCard title="Total Clinics" value={dashboardData.stats.clinics} icon={FaHospital} />
+                <StatCard title="Total Appointments" value={dashboardData.stats.appointments} icon={FaCalendarCheck} />
               </div>
 
               {/* Growth Stats */}
@@ -166,11 +155,15 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-[var(--text-500)]">New Users (Last Week)</p>
-                      <p className="text-xl font-semibold">{activityStats.userStats.newLastWeek}</p>
+                      <p className="text-xl font-semibold">
+                        {dashboardData.activityStats.userStats.newLastWeek}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-[var(--text-500)]">Growth Rate</p>
-                      <p className="text-xl font-semibold">{activityStats.userStats.growthRateLastMonth}%</p>
+                      <p className="text-xl font-semibold">
+                        {dashboardData.activityStats.userStats.growthRateLastMonth}%
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -180,11 +173,11 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-[var(--text-500)]">Last Week</p>
-                      <p className="text-xl font-semibold">{activityStats.appointmentStats.lastWeek}</p>
+                      <p className="text-xl font-semibold">{dashboardData.activityStats.appointmentStats.lastWeek}</p>
                     </div>
                     <div>
                       <p className="text-sm text-[var(--text-500)]">Last Month</p>
-                      <p className="text-xl font-semibold">{activityStats.appointmentStats.lastMonth}</p>
+                      <p className="text-xl font-semibold">{dashboardData.activityStats.appointmentStats.lastMonth}</p>
                     </div>
                   </div>
                 </div>
@@ -194,7 +187,7 @@ const AdminDashboard = () => {
               <div className="bg-white dark:bg-[var(--background-800)] rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">Top Performing Doctors</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {activityStats.topDoctors.map((doctor) => (
+                  {dashboardData.activityStats.topDoctors.map((doctor) => (
                     <div key={doctor._id} className="p-4 bg-[var(--background-50)] dark:bg-[var(--background-900)] rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
@@ -220,7 +213,7 @@ const AdminDashboard = () => {
                 <div className="bg-white dark:bg-[var(--background-800)] rounded-xl shadow-lg p-6">
                   <h3 className="text-lg font-semibold mb-4">Appointments by Status</h3>
                   <div className="space-y-4">
-                    {activityStats.appointmentStats.byStatus.map((status) => (
+                    {dashboardData.activityStats.appointmentStats.byStatus.map((status) => (
                       <div key={status._id} className="flex justify-between items-center">
                         <span className="capitalize">{status._id}</span>
                         <span className="font-medium">{status.count}</span>
@@ -232,7 +225,7 @@ const AdminDashboard = () => {
                 <div className="bg-white dark:bg-[var(--background-800)] rounded-xl shadow-lg p-6">
                   <h3 className="text-lg font-semibold mb-4">Appointments by Specialty</h3>
                   <div className="space-y-4">
-                    {activityStats.appointmentStats.bySpecialty.map((specialty) => (
+                    {dashboardData.activityStats.appointmentStats.bySpecialty.map((specialty) => (
                       <div key={specialty._id} className="flex justify-between items-center">
                         <span>{specialty._id}</span>
                         <span className="font-medium">{specialty.count}</span>
@@ -244,16 +237,19 @@ const AdminDashboard = () => {
             </>
             )}
             
-          {activeTab === 'doctors' && <DoctorsList />}
-            {activeTab === 'clinics' && <ClinicsList />}
-          {activeTab === 'users' && <UsersList />}
+          {activeTab === 'doctors' && <DoctorsList onRefresh={fetchDashboardData} />}
+            {activeTab === 'clinics' && <ClinicsList onRefresh={fetchDashboardData} />}
+          {activeTab === 'users' && <UsersList onRefresh={fetchDashboardData} />}
         </div>
       </div>
 
       <AddDoctorModal
         isOpen={isAddDoctorModalOpen}
         onClose={() => setIsAddDoctorModalOpen(false)}
-        onDoctorAdded={fetchStats}
+        onSuccess={() => {
+          setIsAddDoctorModalOpen(false);
+          fetchDashboardData();
+        }}
       />
     </div>
   );

@@ -1,29 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { FaTrash } from 'react-icons/fa';
+import { FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { apiClient } from '../../config/api';
 
-const UsersList = () => {
+const ITEMS_PER_PAGE = 10;
+
+const UsersList = ({ onRefresh }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
   const { token } = useAuth();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      const response = await apiClient.get('/api/users');
-      setUsers(response.data);
-      setLoading(false);
+      setLoading(true);
+      const response = await apiClient.get(`/api/users?page=${page}&limit=${ITEMS_PER_PAGE}`);
+      setUsers(response.data.users);
+      setTotalUsers(response.data.total);
+      setError('');
     } catch (err) {
       console.error('Error fetching users:', err);
       setError('Failed to fetch users');
+    } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers, page]);
 
   const handleDeleteUser = async (userId) => {
     if (!window.confirm('Are you sure you want to delete this user?')) {
@@ -33,11 +40,16 @@ const UsersList = () => {
     try {
       await apiClient.delete(`/api/users/${userId}`);
       setUsers(users.filter(user => user._id !== userId));
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (err) {
       console.error('Error deleting user:', err);
       setError('Failed to delete user');
     }
   };
+
+  const totalPages = Math.ceil(totalUsers / ITEMS_PER_PAGE);
 
   if (loading) return (
     <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] rounded-xl shadow-lg p-6">
@@ -54,9 +66,14 @@ const UsersList = () => {
   return (
     <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] rounded-xl shadow-lg overflow-hidden">
       <div className="p-6 border-b border-[var(--background-200)] dark:border-[var(--background-700)]">
-        <h2 className="text-2xl font-semibold bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)] bg-clip-text text-transparent">
-          Lista Utilizatori
-        </h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-semibold bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)] bg-clip-text text-transparent">
+            Lista Utilizatori
+          </h2>
+          <div className="text-sm text-[var(--text-500)]">
+            Total: {totalUsers} utilizatori
+          </div>
+        </div>
       </div>
       
       <div className="overflow-x-auto">
@@ -107,6 +124,69 @@ const UsersList = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="px-6 py-4 flex items-center justify-between border-t border-[var(--background-200)] dark:border-[var(--background-700)]">
+        <div className="flex-1 flex justify-between sm:hidden">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-[var(--text-900)] dark:text-[var(--text-100)] bg-white dark:bg-[var(--background-800)] disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="ml-3 relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-[var(--text-900)] dark:text-[var(--text-100)] bg-white dark:bg-[var(--background-800)] disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-[var(--text-500)]">
+              Showing <span className="font-medium">{(page - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
+              <span className="font-medium">{Math.min(page * ITEMS_PER_PAGE, totalUsers)}</span> of{' '}
+              <span className="font-medium">{totalUsers}</span> results
+            </p>
+          </div>
+          <div>
+            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-[var(--background-300)] dark:border-[var(--background-600)] bg-white dark:bg-[var(--background-800)] text-sm font-medium text-[var(--text-500)] hover:bg-[var(--background-50)] disabled:opacity-50"
+              >
+                <span className="sr-only">Previous</span>
+                <FaChevronLeft className="h-5 w-5" />
+              </button>
+              {/* Page numbers */}
+              {[...Array(totalPages)].map((_, idx) => (
+                <button
+                  key={idx + 1}
+                  onClick={() => setPage(idx + 1)}
+                  className={`relative inline-flex items-center px-4 py-2 border border-[var(--background-300)] dark:border-[var(--background-600)] text-sm font-medium ${
+                    page === idx + 1
+                      ? 'z-10 bg-[var(--primary-50)] border-[var(--primary-500)] text-[var(--primary-600)]'
+                      : 'bg-white dark:bg-[var(--background-800)] text-[var(--text-500)] hover:bg-[var(--background-50)]'
+                  }`}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-[var(--background-300)] dark:border-[var(--background-600)] bg-white dark:bg-[var(--background-800)] text-sm font-medium text-[var(--text-500)] hover:bg-[var(--background-50)] disabled:opacity-50"
+              >
+                <span className="sr-only">Next</span>
+                <FaChevronRight className="h-5 w-5" />
+              </button>
+            </nav>
+          </div>
+        </div>
       </div>
     </div>
   );
