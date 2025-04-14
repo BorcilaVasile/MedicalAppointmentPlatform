@@ -48,7 +48,12 @@ app.use(cors({
 }));
 
 // Handle OPTIONS requests explicitly
-app.options('*', cors());
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+  res.sendStatus(204);
+});
 
 // Parse JSON bodies
 app.use(express.json());
