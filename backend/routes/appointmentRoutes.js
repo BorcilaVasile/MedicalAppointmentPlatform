@@ -4,6 +4,8 @@ const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { format } = require('date-fns');
+const Notification = require('../models/Notification');
+const { createNotification } = require('../controllers/notificationController');
 
 // GET: Preia toate programările unui doctor
 router.get('/doctor/:doctorId', async (req, res) => {
@@ -121,6 +123,24 @@ router.post('/', auth, async (req, res) => {
     });
 
     await appointment.save();
+
+    // Create notification for the doctor
+    await createNotification(
+      doctorId,
+      req.user.id,
+      'APPOINTMENT_CREATED',
+      appointment._id,
+      `Aveți o nouă programare pentru ${format(new Date(date), 'dd/MM/yyyy')} la ora ${time}.`
+    );
+
+    // Create notification for the patient
+    await createNotification(
+      req.user.id,
+      doctorId,
+      'APPOINTMENT_CONFIRMED',
+      appointment._id,
+      `Programarea dumneavoastră pentru ${format(new Date(date), 'dd/MM/yyyy')} la ora ${time} a fost confirmată.`
+    );
 
     res.status(201).json({
       message: 'Programarea a fost creată cu succes',

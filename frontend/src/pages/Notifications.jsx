@@ -31,7 +31,7 @@ function Notifications() {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/notifications/');
+      const response = await apiClient.get('/api/notifications');
       setNotifications(response.data);
       setError(null);
     } catch (error) {
