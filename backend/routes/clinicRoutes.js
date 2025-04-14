@@ -125,4 +125,19 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Public route for getting all clinics
+router.get('/public', async (req, res) => {
+  try {
+    const clinics = await Clinic.find()
+      .sort({ createdAt: -1 })
+      .select('name address phone image')
+      .populate('doctors', 'name specialty');
+
+    res.json(clinics);
+  } catch (error) {
+    console.error('Error fetching clinics:', error);
+    res.status(500).json({ message: 'Error fetching clinics', error: error.message });
+  }
+});
+
 module.exports = router; 

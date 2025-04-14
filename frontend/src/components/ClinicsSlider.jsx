@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useKeenSlider } from 'keen-slider/react';
 import 'keen-slider/keen-slider.min.css';
 import { FaMapMarkerAlt, FaPhoneAlt, FaClock } from 'react-icons/fa';
-import apiClient from '../config/api';
+import { apiClient, getImageUrl } from '../config/api';
 
 function ClinicsSlider() {
   const [clinics, setClinics] = useState([]);
@@ -36,11 +36,18 @@ function ClinicsSlider() {
   useEffect(() => {
     const fetchClinics = async () => {
       try {
-        const response = await apiClient.get('/api/clinics');
+        setLoading(true);
+        const response = await apiClient.get('/api/clinics/public');
+        if (!response.data || !Array.isArray(response.data)) {
+          throw new Error('Invalid response format');
+        }
         setClinics(response.data);
-        setLoading(false);
+        setError(null);
       } catch (err) {
-        setError(err.response?.data?.message || 'Nu s-au putut încărca clinicile');
+        console.error('Error fetching clinics:', err);
+        setError(err.response?.data?.message || err.message || 'Nu s-au putut încărca clinicile');
+        setClinics([]);
+      } finally {
         setLoading(false);
       }
     };
@@ -48,39 +55,61 @@ function ClinicsSlider() {
     fetchClinics();
   }, []);
 
-  if (loading) return <div className="text-center py-8">Se încarcă...</div>;
-  if (error) return <div className="text-center text-red-500 py-8">{error}</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 py-8 bg-red-50 rounded-lg">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (!clinics.length) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Nu există clinici disponibile momentan.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="py-8">
       <div ref={sliderRef} className="keen-slider">
         {clinics.map((clinic) => (
           <div key={clinic._id} className="keen-slider__slide">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden mx-2">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden mx-2 h-full">
               <img
-                src={clinic.image || 'https://via.placeholder.com/400x300'}
+                src={clinic.image ? getImageUrl(clinic.image) : '/placeholder-clinic.jpg'}
                 alt={clinic.name}
                 className="w-full h-48 object-cover"
+                onError={(e) => {
+                  e.target.src = '/placeholder-clinic.jpg';
+                }}
               />
               <div className="p-4">
-                <h3 className="text-xl font-semibold">{clinic.name}</h3>
-                <div className="mt-2 space-y-2">
+                <h3 className="text-xl font-semibold mb-3">{clinic.name}</h3>
+                <div className="space-y-2">
                   <div className="flex items-center text-gray-600">
-                    <FaMapMarkerAlt className="mr-2" />
-                    <span>{clinic.address}</span>
+                    <FaMapMarkerAlt className="mr-2 flex-shrink-0" />
+                    <span className="text-sm">{clinic.address}</span>
                   </div>
-                  <div className="flex items-center text-gray-600">
-                    <FaPhoneAlt className="mr-2" />
-                    <span>{clinic.phone}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <FaClock className="mr-2" />
-                    <span>{clinic.workingHours}</span>
-                  </div>
+                  {clinic.phone && (
+                    <div className="flex items-center text-gray-600">
+                      <FaPhoneAlt className="mr-2 flex-shrink-0" />
+                      <span className="text-sm">{clinic.phone}</span>
+                    </div>
+                  )}
                 </div>
                 <Link
                   to={`/clinic/${clinic._id}`}
-                  className="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                  className="mt-4 inline-block bg-gradient-to-r from-primary-500 to-secondary-500 text-white px-4 py-2 rounded-lg hover:from-primary-600 hover:to-secondary-600 transition-all"
                 >
                   Vezi detalii
                 </Link>
