@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaMapMarkerAlt, FaPhone, FaClock, FaCalendar } from 'react-icons/fa';
-import clinicDefaultImage from '../assets/clinic.jpg';
+import clinicDefaultImage from '../assets/clinic-default.jpg';
+import apiClient, { getImageUrl } from '../config/api';
 
 function ClinicProfile() {
   const { id } = useParams();
@@ -12,29 +13,35 @@ function ClinicProfile() {
   const [doctors, setDoctors] = useState([]);
 
   useEffect(() => {
-    const fetchClinic = async () => {
+    const fetchClinicData = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/clinics/${id}`);
-        if (!response.ok) {
-          throw new Error('Eroare la preluarea datelor clinicii');
-        }
-        const data = await response.json();
-        setClinic(data);
-        
-        // Preluăm și doctorii asociați cu această clinică
-        const doctorsResponse = await fetch(`http://localhost:5000/api/clinics/${id}/doctors`);
-        if (doctorsResponse.ok) {
-          const doctorsData = await doctorsResponse.json();
-          setDoctors(doctorsData);
-        }
+        setLoading(true);
+        const response = await apiClient.get(`/api/clinics/${id}`);
+        setClinic(response.data);
+        setError(null);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'Failed to fetch clinic data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchClinic();
+    fetchClinicData();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await apiClient.get(`/api/clinics/${id}/doctors`);
+        setDoctors(response.data);
+      } catch (err) {
+        console.error('Error fetching doctors:', err);
+      }
+    };
+
+    if (id) {
+      fetchDoctors();
+    }
   }, [id]);
 
   if (loading) {
@@ -66,7 +73,7 @@ function ClinicProfile() {
       {/* Hero Section */}
       <div className="relative h-[400px]">
         <img
-          src={clinic.image ? `http://localhost:5000${clinic.image}` : clinicDefaultImage}
+          src={clinic.image ? getImageUrl(clinic.image) : clinicDefaultImage}
           alt={clinic.name}
           className="w-full h-full object-cover"
         />
@@ -142,7 +149,7 @@ function ClinicProfile() {
                   >
                     <div className="flex items-center gap-4">
                       <img
-                        src={doctor.image ? `http://localhost:5000${doctor.image}` : clinicDefaultImage}
+                        src={doctor.image ? getImageUrl(doctor.image) : clinicDefaultImage}
                         alt={doctor.name}
                         className="w-16 h-16 rounded-full object-cover"
                       />

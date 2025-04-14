@@ -6,6 +6,7 @@ import logoutIcon from '../assets/logout.svg';
 import maleProfilePicture from '../assets/male_profile_picture.png';
 import femaleProfilePicture from '../assets/female_profile_picture.png';
 import { FaEdit, FaSave, FaTimes, FaLock, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCamera } from 'react-icons/fa';
+import apiClient, { getImageUrl } from '../config/api';
 
 function Account() {
   const { logout } = useAuth();
@@ -40,42 +41,23 @@ function Account() {
   // Fetch user data on page load
   useEffect(() => {
     const fetchUserData = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/auth/me', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            logout();
-            navigate('/login');
-            return;
-          }
-          throw new Error('Eroare la preluarea datelor utilizatorului');
-        }
-
-        const data = await response.json();
-        setUserData(data);
+        const response = await apiClient.get('/api/auth/me');
+        setUserData(response.data);
         setFormData({
-          name: data.name,
-          email: data.email,
-          phone: data.phone || '',
-          address: data.address || '',
-          profilePicture: data.profilePicture || '',
+          name: response.data.name,
+          email: response.data.email,
+          phone: response.data.phone || '',
+          address: response.data.address || '',
+          profilePicture: response.data.profilePicture || '',
         });
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'Eroare la preluarea datelor utilizatorului');
+        if (err.response?.status === 401) {
+          logout();
+          navigate('/login');
+        }
       } finally {
         setLoading(false);
       }
@@ -109,12 +91,6 @@ function Account() {
     setSuccess('');
     setLoading(true);
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
     const formDataToSend = new FormData();
     formDataToSend.append('name', formData.name);
     formDataToSend.append('email', formData.email);
@@ -125,33 +101,25 @@ function Account() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/update', {
-        method: 'PUT',
+      const response = await apiClient.put('/api/auth/update', formDataToSend, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
         },
-        body: formDataToSend,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Eroare la actualizarea datelor');
-      }
-
-      const updatedData = await response.json();
-      setUserData(updatedData);
+      
+      setUserData(response.data);
       setFormData({
-        name: updatedData.name,
-        email: updatedData.email,
-        phone: updatedData.phone || '',
-        address: updatedData.address || '',
+        name: response.data.name,
+        email: response.data.email,
+        phone: response.data.phone || '',
+        address: response.data.address || '',
       });
       setProfilePicture(null);
       setIsEditing(false);
       setSuccess('Datele au fost actualizate cu succes!');
     } catch (err) {
       console.error('Update error:', err);
-      setError(err.message || 'A apărut o eroare la actualizarea datelor');
+      setError(err.response?.data?.message || 'A apărut o eroare la actualizarea datelor');
     } finally {
       setLoading(false);
     }
@@ -190,34 +158,16 @@ function Account() {
       return;
     }
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
     try {
-      const response = await fetch('http://localhost:5000/api/auth/change-password', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword,
-        }),
+      await apiClient.put('/api/auth/change-password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Eroare la schimbarea parolei');
-      }
 
       setSuccess('Parola a fost schimbată cu succes!');
       setPasswordData({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || 'Eroare la schimbarea parolei');
     } finally {
       setLoading(false);
     }
@@ -270,7 +220,7 @@ function Account() {
                 <img
                   src={
                     userData.profilePicture
-                      ? `http://localhost:5000${userData.profilePicture}`
+                      ? getImageUrl(userData.profilePicture)
                       : userData.gender === 'Masculin'
                       ? maleProfilePicture
                       : femaleProfilePicture

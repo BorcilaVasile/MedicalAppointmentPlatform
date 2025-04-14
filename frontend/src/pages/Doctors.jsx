@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import maleProfilePicture from '../assets/male_profile_picture.png';
 import femaleProfilePicture from '../assets/female_profile_picture.png';
 import { FaStar, FaSearch, FaFilter, FaTimes } from 'react-icons/fa';
+import apiClient, { getImageUrl } from '../config/api';
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
@@ -22,15 +23,11 @@ const Doctors = () => {
 
     const fetchDoctors = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/doctors');
-        if (!response.ok) {
-        throw new Error('Failed to fetch doctors');
-        }
-        const data = await response.json();
-        setDoctors(data);
+        const response = await apiClient.get('/api/doctors');
+        setDoctors(response.data);
         setLoading(false);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'Failed to fetch doctors');
         setLoading(false);
       }
     };
@@ -175,7 +172,7 @@ const Doctors = () => {
                 >
                   <div className="relative">
                         <img
-                      src={doctor.profilePicture ? `http://localhost:5000${doctor.profilePicture}` : '/default-doctor.jpg'}
+                      src={doctor.profilePicture ? getImageUrl(doctor.profilePicture) : '/default-doctor.jpg'}
                       alt={doctor.name}
                       className="w-full h-48 object-cover"
                     />

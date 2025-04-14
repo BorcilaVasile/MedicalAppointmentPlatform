@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
 import { format } from 'date-fns';
 import { FaPlus, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
+import apiClient from '../config/api';
 
 function MedicalHistory() {
   const { patientId } = useParams();
-  const { token, userRole } = useAuth();
+  const { userRole } = useAuth();
   const [medicalHistory, setMedicalHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,16 +22,12 @@ function MedicalHistory() {
   const fetchMedicalHistory = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/medical-history/${patientId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await apiClient.get(`/api/medical-history/${patientId}`);
       setMedicalHistory(response.data);
       setError(null);
     } catch (error) {
       console.error('Error fetching medical history:', error);
-      setError('Failed to load medical history');
+      setError(error.response?.data?.message || 'Failed to load medical history');
     } finally {
       setLoading(false);
     }
@@ -39,34 +35,26 @@ function MedicalHistory() {
 
   const handleAddEntry = async (type) => {
     try {
-      const endpoint = `http://localhost:5000/api/medical-history/${patientId}/${type}`;
-      await axios.post(endpoint, newEntry, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const endpoint = `/api/medical-history/${patientId}/${type}`;
+      await apiClient.post(endpoint, newEntry);
       fetchMedicalHistory();
       setNewEntry({});
       setIsEditing(false);
     } catch (error) {
       console.error('Error adding entry:', error);
-      setError('Failed to add entry');
+      setError(error.response?.data?.message || 'Failed to add entry');
     }
   };
 
   const handleUpdateLifestyle = async () => {
     try {
-      await axios.put(`http://localhost:5000/api/medical-history/${patientId}/lifestyle`, newEntry, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      await apiClient.put(`/api/medical-history/${patientId}/lifestyle`, newEntry);
       fetchMedicalHistory();
       setNewEntry({});
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating lifestyle:', error);
-      setError('Failed to update lifestyle information');
+      setError(error.response?.data?.message || 'Failed to update lifestyle information');
     }
   };
 
