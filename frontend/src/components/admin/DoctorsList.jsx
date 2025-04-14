@@ -19,12 +19,18 @@ const DoctorsList = ({ onRefresh }) => {
     try {
       setLoading(true);
       const response = await apiClient.get(`/api/doctors?page=${page}&limit=${ITEMS_PER_PAGE}`);
-      setDoctors(response.data.doctors);
-      setTotalDoctors(response.data.total);
-      setError('');
+      if (response.data && response.data.doctors) {
+        setDoctors(response.data.doctors);
+        setTotalDoctors(response.data.total);
+        setError('');
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (err) {
       console.error('Error fetching doctors:', err);
-      setError('Failed to fetch doctors');
+      setError(err.response?.data?.message || 'Failed to fetch doctors');
+      setDoctors([]);
+      setTotalDoctors(0);
     } finally {
       setLoading(false);
     }

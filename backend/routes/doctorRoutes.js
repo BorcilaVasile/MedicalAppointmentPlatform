@@ -654,4 +654,33 @@ router.get('/:id/appointments/slots', auth, async (req, res) => {
   }
 });
 
+// Get all doctors with pagination
+router.get('/', auth, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [doctors, total] = await Promise.all([
+      User.find({ role: 'doctor' })
+        .select('-password')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .populate('clinic', 'name'),
+      User.countDocuments({ role: 'doctor' })
+    ]);
+
+    res.json({
+      doctors,
+      total,
+      page,
+      pages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('Error fetching doctors:', error);
+    res.status(500).json({ message: 'Error fetching doctors', error: error.message });
+  }
+});
+
 module.exports = router; 
