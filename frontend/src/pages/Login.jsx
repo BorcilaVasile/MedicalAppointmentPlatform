@@ -98,19 +98,6 @@ const Login = () => {
           </div>
 
           {/* Social Login Buttons */}
-          <div className="space-y-3">
-            <button
-              type="button"
-              className="w-full flex items-center justify-center py-3 px-4 border border-[var(--text-300)] dark:border-[var(--text-700)] rounded-lg text-[var(--text-800)] dark:text-[var(--text-200)] bg-[var(--background-50)] dark:bg-[var(--background-950)] hover:bg-[var(--background-200)] dark:hover:bg-[var(--background-800)] transition-all duration-200"
-            >
-              <img
-                src={googleLogo}
-                alt="Google Logo"
-                className="w-5 h-5 mr-2"
-              />
-              Sign in with Google
-            </button>
-          </div>
           <p className="text-center mt-4 text-[var(--text-600)] dark:text-[var(--text-400)]">
             Don't have an account?{' '}
             <a

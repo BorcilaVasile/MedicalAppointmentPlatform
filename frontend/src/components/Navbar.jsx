@@ -26,10 +26,11 @@ function Navbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [loading, setLoading] = useState(true);
   const notificationsRef = useRef(null);
+  const lastFetchRef = useRef(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (isAuthenticated) {
+      if (isAuthenticated && !userData) {
         try {
           const endpoint = userRole === 'doctor' ? '/api/doctors/me' : '/api/auth/me';
           const response = await apiClient.get(endpoint);
@@ -43,26 +44,49 @@ function Navbar() {
     };
 
     fetchUserData();
-  }, [isAuthenticated, userRole]);
+  }, [isAuthenticated, userRole, userData]);
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      if (isAuthenticated) {
-        try {
-          const response = await apiClient.get('/api/notifications/');
-          setNotifications(response.data);
-          setLoading(false);
-        } catch (error) {
-          console.error('Error fetching notifications:', error);
-          setLoading(false);
-        }
+      if (!isAuthenticated) return;
+      
+      // Verificăm dacă au trecut cel puțin 10 secunde de la ultima verificare
+      const now = Date.now();
+      if (now - lastFetchRef.current < 10000) return;
+      
+      try {
+        const response = await apiClient.get('/api/notifications/');
+        setNotifications(response.data);
+        setLoading(false);
+        lastFetchRef.current = now;
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        setLoading(false);
       }
     };
 
     fetchNotifications();
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    
+    // Poll pentru notificări la fiecare 30 secunde, dar doar dacă tab-ul este activ
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications();
+      }
+    }, 30000);
+
+    // Adăugăm event listener pentru vizibilitatea paginii
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [isAuthenticated]);
 
   useEffect(() => {
