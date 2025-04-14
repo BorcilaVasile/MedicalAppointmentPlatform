@@ -24,20 +24,35 @@ const PORT = process.env.PORT || 5000;
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads directory');
 }
 
 // Middleware
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://medical-appointment-platform.vercel.app'
+    'https://medical-appointment-platform.vercel.app',
+    'https://medical-appointment-platform-git-main-vasileborcila.vercel.app',
+    'https://medical-appointment-platform-vasileborcila.vercel.app'
   ],
-  credentials: true, 
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
+
+// Parse JSON bodies
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path) => {
+    // Set appropriate cache headers for images
+    if (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+    }
+  }
+}));
 
 // Rute
 app.use('/api/users', userRoutes);
@@ -61,22 +76,21 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
-    console.log('Conectat la MongoDB Atlas');
-    console.log('MongoDB URI:', process.env.MONGODB_URI ? 'Setat' : 'Nesetat');
+    console.log('Connected to MongoDB');
   })
   .catch((err) => {
-    console.error('Eroare la conectarea la MongoDB:', err);
-    process.exit(1); // Oprește aplicația în caz de eroare
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
   });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  res.status(500).json({ message: 'Something broke!' });
 });
 
 // Pornire server
 app.listen(PORT, () => {
-  console.log(`Serverul rulează pe portul ${PORT}`);
-  console.log(`Mediul: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`Uploads directory: ${uploadsDir}`);
 });
