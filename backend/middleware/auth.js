@@ -2,32 +2,52 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const authMiddleware = async (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-
-  if (!token) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Adaugă informațiile decodificate în req.user
-    req.user = decoded;
+    // Log the entire Authorization header
+    console.log('Authorization header:', req.header('Authorization'));
 
-    // Încarcă detaliile utilizatorului
-    const user = await User.findById(decoded.id)
-      .select('-password')
-      .populate('clinic', 'name address');
-      
-    if (!user) {
-      throw new Error('User not found');
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      console.log('No token provided');
+      return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
-    req.user.details = user;
-    next();
-  } catch (err) {
-    console.error('Auth middleware error:', err);
-    res.status(401).json({ message: 'Token is not valid' });
+    // Verify JWT_SECRET is set
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not set in environment variables');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
+    try {
+      console.log('Attempting to verify token...');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Token verified successfully:', decoded);
+      
+      // Add decoded information to req.user
+      req.user = decoded;
+
+      // Load user details
+      console.log('Loading user details for ID:', decoded.id);
+      const user = await User.findById(decoded.id)
+        .select('-password')
+        .populate('clinic', 'name address');
+        
+      if (!user) {
+        console.log('User not found in database:', decoded.id);
+        return res.status(401).json({ message: 'User not found' });
+      }
+
+      console.log('User found:', user.name);
+      req.user.details = user;
+      next();
+    } catch (jwtError) {
+      console.error('JWT verification error:', jwtError);
+      return res.status(401).json({ message: 'Token is not valid' });
+    }
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 

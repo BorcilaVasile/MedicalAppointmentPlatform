@@ -31,29 +31,19 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Middleware
 app.use(cors({
-  origin: ['https://medical-appointment-platform.vercel.app', 'http://localhost:5173'],
+  origin: [
+    'http://localhost:5173',
+    'https://medical-appointment-platform.vercel.app',
+    'https://medical-appointment-platform-git-main-vasileborcila.vercel.app',
+    'https://medical-appointment-platform-vasileborcila.vercel.app',
+    'https://medical-appointment-platform-git-main-tudorcrisan.vercel.app',
+    'https://medical-appointment-platform-tudorcrisan.vercel.app'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400, // Preflight results can be cached for 24 hours
-  preflightContinue: true
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
-
-// Add custom CORS headers for all routes
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://medical-appointment-platform.vercel.app');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  // Handle OPTIONS method
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  next();
-});
 
 // Parse JSON bodies
 app.use(express.json());
