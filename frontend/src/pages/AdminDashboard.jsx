@@ -6,6 +6,7 @@ import UsersList from '../components/admin/UsersList';
 import DoctorsList from '../components/admin/DoctorsList';
 import ClinicsList from '../components/admin/ClinicsList';
 import AddDoctorModal from '../components/admin/AddDoctorModal';
+import { apiClient } from '../config/api';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -30,48 +31,31 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch statistics');
-      const data = await response.json();
-      setStats(data);
+      const response = await apiClient.get('/api/admin/stats');
+      setStats(response.data);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching stats:', err);
+      setError('Failed to fetch statistics');
     }
   };
 
   const fetchDoctorStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/stats/doctors', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch doctor statistics');
-      const data = await response.json();
-      setDoctorStats(data);
+      const response = await apiClient.get('/api/admin/stats/doctors');
+      setDoctorStats(response.data);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching doctor stats:', err);
+      setError('Failed to fetch doctor statistics');
     }
   };
 
   const fetchActivityStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/stats/activity', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch activity statistics');
-      const data = await response.json();
-      setActivityStats(data);
-      setLoading(false); 
+      const response = await apiClient.get('/api/admin/stats/activity');
+      setActivityStats(response.data);
     } catch (err) {
-      setError(err.message);
-      setLoading(false);
+      console.error('Error fetching activity stats:', err);
+      setError('Failed to fetch activity statistics');
     }
   };
 

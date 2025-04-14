@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { FaCalendarCheck, FaCalendarTimes, FaFileMedical, FaStethoscope, FaSpinner, FaClock, FaBan, FaTimes } from 'react-icons/fa';
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, addWeeks, subWeeks } from 'date-fns';
 import { enUS } from 'date-fns/locale';
+import { apiClient } from '../config/api';
 
 function DoctorDashboard() {
   const { token } = useAuth();
@@ -56,25 +57,13 @@ function DoctorDashboard() {
   const fetchWeeklyData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        'http://localhost:5000/api/doctors/me/appointments',
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Eroare la preluarea programărilor');
-      }
-
-      const data = await response.json();
+      const response = await apiClient.get('/api/doctors/me/appointments');
+      
       // Filtrăm programările pentru săptămâna curentă
       const start = startOfWeek(currentWeek, { weekStartsOn: 1 });
       const end = endOfWeek(currentWeek, { weekStartsOn: 1 });
       
-      const filteredAppointments = data.filter(appointment => {
+      const filteredAppointments = response.data.filter(appointment => {
         const appointmentDate = new Date(appointment.date);
         return appointmentDate >= start && appointmentDate <= end;
       });
@@ -92,21 +81,8 @@ function DoctorDashboard() {
   const handleMarkUnavailable = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/doctors/me/unavailable', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newUnavailable)
-      });
-
-      if (!response.ok) {
-        throw new Error('Eroare la marcarea intervalelor ca indisponibile');
-      }
-
-      const data = await response.json();
-      setUnavailableSlots(data.unavailableSlots);
+      const response = await apiClient.post('/api/doctors/me/unavailable', newUnavailable);
+      setUnavailableSlots(response.data.unavailableSlots);
       setShowUnavailableForm(false);
       setNewUnavailable({
         date: format(new Date(), 'yyyy-MM-dd'),
@@ -121,19 +97,8 @@ function DoctorDashboard() {
 
   const handleDeleteUnavailable = async (slotId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/doctors/me/unavailable/${slotId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Eroare la ștergerea intervalului');
-      }
-
-      const data = await response.json();
-      setUnavailableSlots(data.unavailableSlots);
+      const response = await apiClient.delete(`/api/doctors/me/unavailable/${slotId}`);
+      setUnavailableSlots(response.data.unavailableSlots);
     } catch (err) {
       setError(err.message);
     }
@@ -144,20 +109,11 @@ function DoctorDashboard() {
 
     try {
       // Prima dată anulăm programarea
-      const response = await fetch(`http://localhost:5000/api/doctors/appointments/${appointmentId}/cancel`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: 'cancelled' })
+      const response = await apiClient.post(`/api/doctors/appointments/${appointmentId}/cancel`, {
+        status: 'cancelled'
       });
 
-      if (!response.ok) {
-        throw new Error('Eroare la anularea programării');
-      }
-
-      const { appointment } = await response.json();
+      const { appointment } = response.data;
 
       // Actualizăm lista de programări local
       const updatedAppointments = appointments.map(app => 
@@ -165,23 +121,16 @@ function DoctorDashboard() {
       );
       setAppointments(updatedAppointments);
 
-      // Creăm notificarea pentru pacient folosind ID-ul pacientului din răspunsul serverului
-      const notificationResponse = await fetch('http://localhost:5000/api/notifications', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      // Creăm notificarea pentru pacient
+      try {
+        await apiClient.post('/api/notifications', {
           recipient: appointment.patient,
           type: 'APPOINTMENT_CANCELLED',
           appointment: appointmentId,
           message: `Your appointment for ${format(new Date(appointment.date), 'MMMM d, yyyy')} at ${appointment.time} has been cancelled by the doctor.`
-        })
-      });
-
-      if (!notificationResponse.ok) {
-        console.error('Failed to create notification for patient');
+        });
+      } catch (notificationError) {
+        console.error('Failed to create notification for patient:', notificationError);
       }
 
     } catch (err) {
@@ -192,19 +141,9 @@ function DoctorDashboard() {
 
   const handleAddDiagnosis = async (appointmentId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/doctors/appointments/${appointmentId}/diagnosis`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ diagnosis })
+      const response = await apiClient.post(`/api/doctors/appointments/${appointmentId}/diagnosis`, {
+        diagnosis
       });
-
-      if (!response.ok) {
-        throw new Error('Eroare la adăugarea diagnosticului');
-      }
-
       // Actualizează lista de programări
       setAppointments(appointments.map(app => 
         app._id === appointmentId ? { ...app, diagnosis } : app
@@ -218,19 +157,9 @@ function DoctorDashboard() {
 
   const handleAddReferral = async (appointmentId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/doctors/appointments/${appointmentId}/referral`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(referral)
+      const response = await apiClient.post(`/api/doctors/appointments/${appointmentId}/referral`, {
+        referral
       });
-
-      if (!response.ok) {
-        throw new Error('Eroare la adăugarea trimiterii');
-      }
-
       // Actualizează lista de programări
       setAppointments(appointments.map(app => 
         app._id === appointmentId ? { ...app, referral } : app

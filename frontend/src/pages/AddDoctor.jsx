@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { apiClient } from '../config/api';
 
 function AddDoctor() {
   const navigate = useNavigate();
@@ -19,68 +20,38 @@ function AddDoctor() {
   useEffect(() => {
     const fetchClinics = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/admin/clinics', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Eroare la încărcarea clinicilor');
-        }
-
-        const data = await response.json();
-        setClinics(data);
+        const response = await apiClient.get('/api/admin/clinics');
+        setClinics(response.data);
       } catch (err) {
-        console.error('Eroare la încărcarea clinicilor:', err);
-        setError('Nu s-au putut încărca clinicile. Vă rugăm să încercați din nou.');
+        console.error('Error fetching clinics:', err);
+        setError('Failed to fetch clinics');
       }
     };
 
     fetchClinics();
-  }, [token]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append('name', formData.name);
+    formData.append('email', formData.email);
+    formData.append('clinicId', formData.clinic);
+    formData.append('description', formData.description);
 
     try {
-      // Generăm o parolă temporară pentru contul inițial
-      const tempPassword = Math.random().toString(36).slice(-8);
-      
-      const response = await fetch('http://localhost:5000/api/admin/doctors', {
-        method: 'POST',
+      await apiClient.post('/api/admin/doctors', formData, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'multipart/form-data',
         },
-        body: JSON.stringify({
-          ...formData,
-          password: tempPassword,
-          isFirstLogin: true
-        })
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Eroare la adăugarea doctorului');
-      }
-
-      // Afișăm credențialele într-o alertă
-      alert(
-        'Cont creat cu succes!\n\n' +
-        'Vă rugăm să transmiteți doctorului următoarele credențiale:\n\n' +
-        `Email: ${formData.email}\n` +
-        `Parolă temporară: ${tempPassword}\n\n` +
-        'Doctorul va trebui să își schimbe parola și să își completeze profilul la prima autentificare.'
-      );
-
-      navigate('/admin/dashboard');
+      navigate('/admin/doctors');
     } catch (err) {
-      setError(err.message);
       console.error('Error adding doctor:', err);
+      setError(err.response?.data?.message || 'Failed to add doctor');
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { FaTrash } from 'react-icons/fa';
+import { apiClient } from '../../config/api';
 
 const UsersList = () => {
   const [users, setUsers] = useState([]);
@@ -14,45 +15,27 @@ const UsersList = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-
-      const data = await response.json();
-      setUsers(data);
+      const response = await apiClient.get('/api/users');
+      setUsers(response.data);
       setLoading(false);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching users:', err);
+      setError('Failed to fetch users');
       setLoading(false);
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Sigur doriți să ștergeți acest utilizator?')) {
+    if (!window.confirm('Are you sure you want to delete this user?')) {
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete user');
-      }
-
+      await apiClient.delete(`/api/users/${userId}`);
       setUsers(users.filter(user => user._id !== userId));
     } catch (err) {
-      setError(err.message);
+      console.error('Error deleting user:', err);
+      setError('Failed to delete user');
     }
   };
 

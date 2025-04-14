@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CompanyInfo from '../components/CompanyInfo'; 
 import googleLogo from '../assets/google-icon.png'; 
+import { apiClient } from '../config/api';
 
 function Signup() {
   const [name, setName] = useState('');
@@ -11,6 +12,7 @@ function Signup() {
   const [gender, setGender] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const checkPassword = (confirmValue) => {
@@ -25,6 +27,7 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -39,21 +42,14 @@ function Signup() {
     const formData = { name, email, password, gender };
 
     try {
-      const response = await fetch('http://localhost:5000/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+      const response = await apiClient.post('/api/users', formData);
+      navigate('/login', { 
+        state: { message: 'Cont creat cu succes! Vă rugăm să vă autentificați.' }
       });
-
-      const data = await response.json();
-      if (response.ok) {
-        navigate('/login');
-      } else {
-        setError(data.message || 'Sign up failed');
-      }
     } catch (err) {
-      console.error(err);
-      setError('An error occurred. Please try again.');
+      setError(err.response?.data?.message || 'A apărut o eroare la înregistrare.');
+    } finally {
+      setLoading(false);
     }
   };
 

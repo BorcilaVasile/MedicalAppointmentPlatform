@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaTimes, FaHospital, FaMapMarkerAlt, FaImage } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { apiClient } from '../../config/api';
 
 const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
   const [formData, setFormData] = useState({
@@ -37,34 +38,26 @@ const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
     setError('');
     setLoading(true);
 
+    const formData = new FormData();
+    formData.append('name', formData.name);
+    formData.append('address', formData.address);
+    formData.append('phone', formData.phone);
+    formData.append('description', formData.description);
+    if (formData.image) {
+      formData.append('image', formData.image);
+    }
+
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('address', formData.address);
-      formDataToSend.append('phone', formData.phone);
-      formDataToSend.append('description', formData.description);
-      if (formData.image) {
-        formDataToSend.append('image', formData.image);
-      }
-
-      const response = await fetch('http://localhost:5000/api/admin/clinics', {
-        method: 'POST',
+      await apiClient.post('/api/admin/clinics', formData, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'multipart/form-data',
         },
-        body: formDataToSend
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Eroare la adăugarea clinicii');
-      }
-
-      const newClinic = await response.json();
-      onClinicAdded(newClinic);
+      onClinicAdded(formData);
       onClose();
     } catch (err) {
-      setError(err.message);
+      console.error('Error adding clinic:', err);
+      setError(err.response?.data?.message || 'Failed to add clinic');
     } finally {
       setLoading(false);
     }

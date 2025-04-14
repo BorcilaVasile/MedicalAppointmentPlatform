@@ -3,6 +3,7 @@ import { FaTrash, FaUserMd } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import maleProfilePicture from '../../assets/male_profile_picture.png';
 import femaleProfilePicture from '../../assets/female_profile_picture.png';
+import { apiClient, getImageUrl } from '../../config/api';
 
 const DoctorsList = () => {
   const [doctors, setDoctors] = useState([]);
@@ -16,47 +17,27 @@ const DoctorsList = () => {
 
   const fetchDoctors = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/doctors', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to fetch doctors');
-      }
-      
-      const data = await response.json();
-      setDoctors(data);
-      setError(null);
+      const response = await apiClient.get('/api/admin/doctors');
+      setDoctors(response.data);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching doctors:', err);
+      setError('Failed to fetch doctors');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteDoctor = async (doctorId) => {
-    if (!window.confirm('Sigur doriți să ștergeți acest doctor?')) return;
+    if (!window.confirm('Are you sure you want to delete this doctor?')) {
+      return;
+    }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/doctors/${doctorId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to delete doctor');
-      }
-
+      await apiClient.delete(`/api/admin/doctors/${doctorId}`);
       setDoctors(doctors.filter(doctor => doctor._id !== doctorId));
-      setError(null);
     } catch (err) {
-      setError(err.message);
+      console.error('Error deleting doctor:', err);
+      setError('Failed to delete doctor');
     }
   };
 
@@ -117,15 +98,9 @@ const DoctorsList = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
-                        src={
-                          doctor.image
-                            ? `http://localhost:5000${doctor.image}`
-                            : doctor.gender === 'Masculin'
-                            ? maleProfilePicture
-                            : femaleProfilePicture
-                        }
-                        alt={doctor.name}
-                        className="h-10 w-10 rounded-full object-cover"
+                        src={getImageUrl(doctor.image) || '/default-doctor.jpg'}
+                        alt={`${doctor.name}'s profile`}
+                        className="w-10 h-10 rounded-full object-cover"
                       />
                       <div className="ml-4">
                         <div className="text-sm font-medium text-[var(--text-900)] dark:text-[var(--text-100)]">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaCalendarAlt } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { apiClient } from '../../config/api';
 
 const AppointmentsList = () => {
   const [appointments, setAppointments] = useState([]);
@@ -14,17 +15,12 @@ const AppointmentsList = () => {
 
   const fetchAppointments = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/appointments', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch appointments');
-      const data = await response.json();
-      setAppointments(data);
+      const response = await apiClient.get('/api/admin/appointments');
+      setAppointments(response.data);
       setLoading(false);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching appointments:', err);
+      setError('Failed to fetch appointments');
       setLoading(false);
     }
   };

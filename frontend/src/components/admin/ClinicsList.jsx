@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaTrash, FaHospital, FaMapMarkerAlt, FaPhone, FaPlus, FaEye } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import AddClinicModal from './AddClinicModal';
+import { apiClient, getImageUrl } from '../../config/api';
 
 const ClinicsList = () => {
   const [clinics, setClinics] = useState([]);
@@ -17,53 +18,27 @@ const ClinicsList = () => {
 
   const fetchClinics = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/clinics', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to fetch clinics');
-      }
-      
-      const data = await response.json();
-      setClinics(data);
-      setError(null);
+      const response = await apiClient.get('/api/admin/clinics');
+      setClinics(response.data);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching clinics:', err);
+      setError('Failed to fetch clinics');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteClinic = async (clinicId) => {
-    if (!window.confirm('Sigur doriți să ștergeți această clinică?')) return;
+    if (!window.confirm('Are you sure you want to delete this clinic?')) {
+      return;
+    }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/clinics/${clinicId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Eroare la ștergerea clinicii');
-      }
-
+      await apiClient.delete(`/api/admin/clinics/${clinicId}`);
       setClinics(clinics.filter(clinic => clinic._id !== clinicId));
-      setError(null);
-      // Afișează un mesaj de succes temporar
-      const successMessage = data.message || 'Clinica a fost ștearsă cu succes';
-      setError({ type: 'success', message: successMessage });
-      setTimeout(() => setError(null), 3000);
     } catch (err) {
-      setError({ type: 'error', message: err.message });
+      console.error('Error deleting clinic:', err);
+      setError('Failed to delete clinic');
     }
   };
 
@@ -136,7 +111,11 @@ const ClinicsList = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 bg-[var(--primary-100)] dark:bg-[var(--primary-900)] rounded-lg flex items-center justify-center">
-                        <FaHospital className="h-6 w-6 text-[var(--primary-500)]" />
+                        <img
+                          src={getImageUrl(clinic.image) || '/default-clinic.jpg'}
+                          alt={`${clinic.name}`}
+                          className="w-full h-48 object-cover rounded-t-lg"
+                        />
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-[var(--text-900)] dark:text-[var(--text-100)]">
