@@ -33,7 +33,10 @@ const Login = () => {
       // Redirect based on role
       if (response.data.userType === 'Admin') {
         navigate('/admin/dashboard');
-      } else {
+      } if(response.data.userType === 'Doctor')
+        {
+          navigate('/doctor/dashboard');
+        }else {
         navigate('/');
       }
     } catch (err) {

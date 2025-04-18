@@ -50,6 +50,7 @@ function Account() {
   const [activeTab, setActiveTab] = useState('personal');
   const navigate = useNavigate();
   const isDoctor = userRole === 'Doctor';
+  const isAdmin = userRole === 'Admin';
 
   // Fetch user data on page load
   useEffect(() => {
@@ -58,8 +59,14 @@ function Account() {
         setLoading(true);
         console.log('Fetching user data...');
         
-        // Endpoint diferit în funcție de tipul utilizatorului
-        const endpoint = isDoctor ? '/api/doctor' : '/api/patient';
+        // Different endpoint based on user type
+        let endpoint = '/api/patient';
+        
+        if (isDoctor) {
+          endpoint = '/api/doctor';
+        } else if (isAdmin) {
+          endpoint = '/api/admin';
+        }
         
         const response = await apiClient.get(endpoint, {
           headers: {
@@ -68,7 +75,7 @@ function Account() {
         });
         console.log('User data fetched:', response.data);
         
-        // Pentru doctor, ajustăm datele pentru a se potrivi cu structura noastră
+        // For doctor, adjust data to fit our structure
         if (isDoctor) {
           setUserData({
             name: `${response.data.firstName} ${response.data.lastName}`,
@@ -94,8 +101,25 @@ function Account() {
             profilePicture: response.data.image || '',
             createdAt: response.data.createdAt || ''
           });
+        } else if (isAdmin) {
+          // For admin, handle data similar to doctor but with Admin model fields
+          setUserData({
+            name: `${response.data.firstName} ${response.data.lastName}`,
+            email: response.data.email || '',
+            phone: response.data.phone || '',
+            address: response.data.address || '',
+            profilePicture: response.data.profilePicture || '',
+            createdAt: response.data.createdAt || ''
+          });
+          setFormData({
+            name: `${response.data.firstName} ${response.data.lastName}`,
+            email: response.data.email || '',
+            phone: response.data.phone || '',
+            address: response.data.address || '',
+            createdAt: response.data.createdAt || ''
+          });
         } else {
-          // Pentru pacient, folosim datele așa cum sunt
+          // For patient, use data as is
           setUserData(response.data);
           setFormData({
             name: response.data.name,
@@ -119,7 +143,7 @@ function Account() {
     };
 
     fetchUserData();
-  }, [logout, navigate, isDoctor]);
+  }, [logout, navigate, isDoctor, isAdmin]);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -157,8 +181,8 @@ function Account() {
       
       // Append only changed fields to optimize payload
       if (formData.name) {
-        // Pentru doctor, divizăm numele în firstName și lastName
-        if (isDoctor) {
+        // For doctor and admin, split name into firstName and lastName
+        if (isDoctor || isAdmin) {
           const nameParts = formData.name.split(' ');
           const firstName = nameParts[0];
           const lastName = nameParts.slice(1).join(' ');
@@ -174,11 +198,17 @@ function Account() {
       if (formData.address) formDataToSend.append('address', formData.address);
       
       if (profilePicture instanceof File) {
-        formDataToSend.append(isDoctor ? 'profilePicture' : 'profilePicture', profilePicture);
+        formDataToSend.append('profilePicture', profilePicture);
       }
       
-      // Endpoint diferit în funcție de tipul utilizatorului
-      const endpoint = isDoctor ? '/api/doctor' : '/api/patient';
+      // Different endpoint based on user type
+      let endpoint = '/api/patient';
+      
+      if (isDoctor) {
+        endpoint = '/api/doctor';
+      } else if (isAdmin) {
+        endpoint = '/api/admin';
+      }
       
       const response = await apiClient.put(endpoint, formDataToSend, {
         headers: {
@@ -187,13 +217,12 @@ function Account() {
         },
       });
   
-      // Update state - adaptăm pentru răspunsurile diferite
-      if (isDoctor) {
-        // Răspunsul pentru doctori poate varia în funcție de implementarea API-ului
-        const doctorData = response.data.doctor || response.data;
+      // Update state based on user type
+      if (isDoctor || isAdmin) {
+        const userData = response.data.doctor || response.data.admin || response.data;
         setUserData({
-          ...doctorData,
-          name: `${doctorData.firstName} ${doctorData.lastName}`
+          ...userData,
+          name: `${userData.firstName} ${userData.lastName}`
         });
       } else {
         setUserData(response.data.patient || response.data);
@@ -240,7 +269,7 @@ function Account() {
     setSuccess('');
   };
 
-  // Change password
+  // Handle password change
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setError('');
@@ -260,8 +289,14 @@ function Account() {
     }
 
     try {
-      // Endpoint diferit în funcție de tipul utilizatorului
-      const endpoint = isDoctor ? '/api/doctor/password' : '/api/patient/password';
+      // Different endpoint based on user type
+      let endpoint = '/api/patient/password';
+      
+      if (isDoctor) {
+        endpoint = '/api/doctor/password';
+      } else if (isAdmin) {
+        endpoint = '/api/admin/password';
+      }
       
       await apiClient.put(endpoint, {
         currentPassword: passwordData.currentPassword,
@@ -363,7 +398,7 @@ function Account() {
                 <img
                   src={ userData?.profilePicture
                       ? getImageUrl(userData.profilePicture)
-                      : isDoctor && userData?.gender === 'Male'
+                      : (isDoctor || isAdmin) && userData?.gender === 'Male'
                       ? maleProfilePicture
                       : femaleProfilePicture
                   }
@@ -449,7 +484,7 @@ function Account() {
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                           </div>
                           <p className="text-gray-900 dark:text-white">
-                            {isDoctor 
+                            {(isDoctor || isAdmin)
                               ? `${userData.firstName || ''} ${userData.lastName || ''}` 
                               : userData.name}
                           </p>
@@ -475,7 +510,7 @@ function Account() {
                           </div>
                           <p className="text-gray-900 dark:text-white">{userData.address || 'N/A'}</p>
                         </div>
-                        {renderDoctorSpecificFields()}
+                        {!isAdmin && renderDoctorSpecificFields()}
                       </div>
                       <div className="flex justify-center">
                         <motion.button

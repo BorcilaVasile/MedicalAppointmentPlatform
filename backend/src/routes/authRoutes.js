@@ -46,6 +46,7 @@ router.post('/login', async (req, res) => {
       }
     }
 
+
     // Dacă nu s-a găsit utilizatorul
     if (!user) {
       console.log('User not found in any collection');

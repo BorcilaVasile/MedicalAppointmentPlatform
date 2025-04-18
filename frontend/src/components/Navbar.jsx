@@ -136,6 +136,7 @@ function Navbar() {
   };
 
   const getDashboardLink = () => {
+    console.log('User role:', userRole);
     switch (userRole) {
       case 'Admin':
         return '/admin/dashboard';
@@ -148,9 +149,9 @@ function Navbar() {
 
   const getDashboardIcon = () => {
     switch (userRole) {
-      case 'admin':
+      case 'Admin':
         return <FaUserShield className="mr-2" />;
-      case 'doctor':
+      case 'Doctor':
         return <FaUserMd className="mr-2" />;
       default:
         return <FaUser className="mr-2" />;

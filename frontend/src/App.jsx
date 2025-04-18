@@ -45,10 +45,22 @@ function App() {
               <Route path="/account" element={<Account />} />
               <Route path="/doctors/:id" element={<DoctorProfile />} />
               <Route path="/clinics/:id" element={<ClinicProfile />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+              <Route path="/admin/dashboard" element={
+                <PrivateRoute requiredRole="admin">
+                  <AdminDashboard />
+                </PrivateRoute>
+              } />
+              <Route path="/doctor/dashboard" element={
+                <PrivateRoute requiredRole="doctor">
+                  <DoctorDashboard />
+                </PrivateRoute>
+              } />
               <Route path="/doctors" element={<Doctors />} />
-              <Route path="/admin/add-doctor" element={<AddDoctor />} />
+              <Route path="/admin/add-doctor" element={
+                <PrivateRoute requiredRole="admin">
+                  <AddDoctor />
+                </PrivateRoute>
+              } />
               <Route path="/appointments" element={
                 <PrivateRoute>
                   <MyAppointments />
