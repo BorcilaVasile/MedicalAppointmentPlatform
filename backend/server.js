@@ -6,16 +6,17 @@ const path = require('path');
 const fs = require('fs');
 
 // Încarcă rutele
-const userRoutes = require('./routes/userRoutes');
-const authRoutes = require('./routes/authRoutes');
-const carouselRoutes = require('./routes/carousel');
-const domainsRoutes = require('./routes/domains');
-const doctorRoutes = require('./routes/doctorRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const clinicRoutes = require('./routes/clinicRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const appointmentRoutes = require('./routes/appointmentRoutes');
-const reviewRoutes = require('./routes/reviewRoutes');
+const authRoutes = require('./src/routes/authRoutes');
+const carouselRoutes = require('./src/routes/carousel');
+const registerRoutes = require('./src/routes/registerRoutes');
+const publicDoctorsRoutes = require('./src/routes/publicDoctorsRoutes');
+const publicClinicRoutes = require('./src/routes/publicClinicRoutes');
+const notificationsRoutes = require('./src/routes/notificationRoutes');
+const privatePatientRoutes = require('./src/routes/privatePatientRoutes');
+const specialtiesRoutes= require('./src/routes/specialitiesRoutes');
+const publicReviewRoutes= require('./src/routes/publicReviewRoutes');
+const publicAppointmentRoutes=require('./src/routes/publicAppointmentsRoutes');
+const medicalHistoryRoutes = require('./src/routes/medicalHistoryRoutes');
 
 dotenv.config();
 
@@ -69,16 +70,19 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 }));
 
 // Rute
-app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/carousel', carouselRoutes);
-app.use('/api/domains', domainsRoutes);
-app.use('/api/doctors', doctorRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/clinics', clinicRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/reviews', reviewRoutes);
+app.use('/api/patients', registerRoutes);
+app.use('/api/doctors', publicDoctorsRoutes);
+app.use('/api/clinics', publicClinicRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/patient', privatePatientRoutes);
+app.use('/api/specialties', specialtiesRoutes);
+app.use('/api/reviews', publicReviewRoutes);
+app.use('/api/appointments',publicAppointmentRoutes);
+app.use('/uploads', express.static('uploads'));
+app.use('/api/medical-history', medicalHistoryRoutes);
+
 
 // Ruta de test
 app.get('/', (req, res) => {

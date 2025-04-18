@@ -26,8 +26,7 @@ function Footer() {
               Elysium Medical
             </h3>
             <p className="text-gray-100 text-sm leading-relaxed">
-              Platformă medicală dedicată facilitării programărilor și gestionării relației dintre pacienți și medici.
-              Oferim acces rapid la cei mai buni specialiști din domeniul medical.
+            Your gateway to seamless healthcare - connecting patients with leading medical specialists through effortless scheduling and personalized care.
             </p>
             <div className="flex items-center space-x-2 text-gray-100">
               <FaClock className="text-[var(--accent-300)]" />
@@ -37,24 +36,24 @@ function Footer() {
 
           {/* Services Section */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-[var(--accent-300)]">Servicii</h4>
+            <h4 className="text-lg font-semibold mb-4 text-[var(--accent-300)]">Services</h4>
             <ul className="space-y-2 text-gray-100">
               <li className="flex items-center space-x-2">
                 <FaUserMd className="text-[var(--accent-300)]" />
                 <Link to="/doctors" className="hover:text-[var(--accent-200)] transition-colors duration-300">
-                  Găsește un Doctor
+                  Find a doctor
                 </Link>
               </li>
               <li className="flex items-center space-x-2">
                 <FaCalendarAlt className="text-[var(--accent-300)]" />
                 <Link to="/appointments" className="hover:text-[var(--accent-200)] transition-colors duration-300">
-                  Programări Online
+                  Online appointments
                 </Link>
               </li>
               <li className="flex items-center space-x-2">
                 <FaMapMarkerAlt className="text-[var(--accent-300)]" />
                 <Link to="/clinics" className="hover:text-[var(--accent-200)] transition-colors duration-300">
-                  Clinicile Noastre
+                  Our clinics
                 </Link>
               </li>
             </ul>
@@ -78,7 +77,7 @@ function Footer() {
               </li>
               <li className="flex items-center space-x-2">
                 <FaMapMarkerAlt className="text-[var(--accent-300)]" />
-                <span>Strada Exemplu, Nr. 123, București</span>
+                <span>Street Exemplu, Nr. 123, București</span>
               </li>
             </ul>
           </div>
@@ -120,12 +119,12 @@ function Footer() {
       <div className="border-t border-[#326278] dark:border-[#2b394e] bg-[#326278] dark:bg-[#2b394e]">
         <div className="container mx-auto py-4 px-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-100">
           <p>
-            © {new Date().getFullYear()} Elysium Medical. Toate drepturile rezervate.
+            © {new Date().getFullYear()} Elysium Medical. All rights reserved.
           </p>
           <div className="flex items-center mt-2 md:mt-0">
-            <span>Realizat cu</span>
+            <span>Realised with </span>
             <FaHeart className="mx-1 text-[#e7b697] animate-pulse" />
-            <span>pentru sănătatea ta</span>
+            <span>for your health</span>
           </div>
         </div>
       </div>

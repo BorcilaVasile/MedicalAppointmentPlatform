@@ -4,6 +4,7 @@ import { useKeenSlider } from 'keen-slider/react';
 import 'keen-slider/keen-slider.min.css';
 import { FaMapMarkerAlt, FaPhoneAlt, FaClock } from 'react-icons/fa';
 import { apiClient, getImageUrl } from '../config/api';
+import placeholderClinicImage from '../assets/placeholder-clinic.png';
 
 function ClinicsSlider() {
   const [clinics, setClinics] = useState([]);
@@ -37,7 +38,7 @@ function ClinicsSlider() {
     const fetchClinics = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get('/api/clinics/public');
+        const response = await apiClient.get('/api/clinics');
         if (!response.data || !Array.isArray(response.data)) {
           throw new Error('Invalid response format');
         }
@@ -74,7 +75,7 @@ function ClinicsSlider() {
   if (!clinics.length) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">Nu există clinici disponibile momentan.</p>
+        <p className="text-gray-500">There are no available clinics at the moment.</p>
       </div>
     );
   }
@@ -86,11 +87,11 @@ function ClinicsSlider() {
           <div key={clinic._id} className="keen-slider__slide">
             <div className="bg-white rounded-lg shadow-lg overflow-hidden mx-2 h-full">
               <img
-                src={clinic.image ? getImageUrl(clinic.image) : '/placeholder-clinic.jpg'}
+                src={clinic.image ? getImageUrl(clinic.image) : placeholderClinicImage}
                 alt={clinic.name}
                 className="w-full h-48 object-cover"
                 onError={(e) => {
-                  e.target.src = '/placeholder-clinic.jpg';
+                  e.target.src = placeholderClinicImage; 
                 }}
               />
               <div className="p-4">
@@ -108,10 +109,10 @@ function ClinicsSlider() {
                   )}
                 </div>
                 <Link
-                  to={`/clinic/${clinic._id}`}
-                  className="mt-4 inline-block bg-gradient-to-r from-primary-500 to-secondary-500 text-white px-4 py-2 rounded-lg hover:from-primary-600 hover:to-secondary-600 transition-all"
+                  to={`/clinics/${clinic._id}`}
+                  className="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
                 >
-                  Vezi detalii
+                  See details
                 </Link>
               </div>
             </div>

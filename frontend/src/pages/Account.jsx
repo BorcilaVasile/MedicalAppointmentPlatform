@@ -43,14 +43,22 @@ function Account() {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get('/api/auth/me');
+        console.log('Fetching user data...');
+        const response = await apiClient.get('/api/patient', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        console.log('User data fetched:', response.data);
         setUserData(response.data);
         setFormData({
           name: response.data.name,
           email: response.data.email,
           phone: response.data.phone || '',
           address: response.data.address || '',
+          gender: response.data.gender || '',
           profilePicture: response.data.profilePicture || '',
+          createdAt: response.data.createdAt || ''
         });
       } catch (err) {
         setError(err.response?.data?.message || 'Eroare la preluarea datelor utilizatorului');
@@ -90,36 +98,45 @@ function Account() {
     setError('');
     setSuccess('');
     setLoading(true);
-
-    const formDataToSend = new FormData();
-    formDataToSend.append('name', formData.name);
-    formDataToSend.append('email', formData.email);
-    if (formData.phone) formDataToSend.append('phone', formData.phone);
-    if (formData.address) formDataToSend.append('address', formData.address);
-    if (profilePicture) {
-      formDataToSend.append('profilePicture', profilePicture);
+  
+    if (!formData.name || !formData.email) {
+      setError('Numele și emailul sunt obligatorii');
+      setLoading(false);
+      return;
     }
-
+  
     try {
-      const response = await apiClient.put('/api/auth/update', formDataToSend, {
+      const formDataToSend = new FormData();
+      
+      // Append only changed fields to optimize payload
+      if (formData.name) formDataToSend.append('name', formData.name);
+      if (formData.email) formDataToSend.append('email', formData.email);
+      if (formData.phone) formDataToSend.append('phone', formData.phone);
+      if (formData.address) formDataToSend.append('address', formData.address);
+      if (profilePicture instanceof File) {
+        formDataToSend.append('profilePicture', profilePicture);
+      }
+      
+  
+      const response = await apiClient.put('/api/patient', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      
-      setUserData(response.data);
-      setFormData({
-        name: response.data.name,
-        email: response.data.email,
-        phone: response.data.phone || '',
-        address: response.data.address || '',
-      });
-      setProfilePicture(null);
+  
+      // Update state
+      setUserData(response.data.patient);
       setIsEditing(false);
       setSuccess('Datele au fost actualizate cu succes!');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Update error:', err);
-      setError(err.response?.data?.message || 'A apărut o eroare la actualizarea datelor');
+      setError(
+        err.response?.data?.error || 
+        err.response?.data?.message || 
+        'A apărut o eroare la actualizarea datelor'
+      );
     } finally {
       setLoading(false);
     }
@@ -159,7 +176,7 @@ function Account() {
     }
 
     try {
-      await apiClient.put('/api/auth/change-password', {
+      await apiClient.put('/api/patient/password', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
@@ -196,7 +213,7 @@ function Account() {
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)] p-6 text-white">
             <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold">Contul Meu</h1>
+              <h1 className="text-3xl font-bold">Account informations</h1>
               <motion.button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
@@ -204,7 +221,7 @@ function Account() {
                 whileTap={{ scale: 0.95 }}
               >
                 <img src={logoutIcon} alt="Logout" className="h-5 w-5" />
-                <span>Deconectare</span>
+                <span>Disconnect</span>
               </motion.button>
             </div>
           </div>
@@ -221,7 +238,7 @@ function Account() {
                   src={
                     userData.profilePicture
                       ? getImageUrl(userData.profilePicture)
-                      : userData.gender === 'Masculin'
+                      : userData.gender === 'Male'
                       ? maleProfilePicture
                       : femaleProfilePicture
                   }
@@ -273,7 +290,7 @@ function Account() {
                     : 'text-gray-500 dark:text-gray-400 hover:text-[var(--primary-500)]'
                 }`}
               >
-                Informații Personale
+                Personal informations
               </button>
               <button
                 onClick={() => setActiveTab('password')}
@@ -283,7 +300,7 @@ function Account() {
                     : 'text-gray-500 dark:text-gray-400 hover:text-[var(--primary-500)]'
                 }`}
               >
-                Schimbare Parolă
+                Change password
               </button>
             </div>
 
@@ -304,7 +321,7 @@ function Account() {
                         <div className="bg-gray-50 dark:bg-[var(--background-800)] p-4 rounded-lg">
                           <div className="flex items-center space-x-3 mb-2">
                             <FaUser className="text-[var(--primary-500)]" />
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nume</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                           </div>
                           <p className="text-gray-900 dark:text-white">{userData.name}</p>
                         </div>
@@ -318,14 +335,14 @@ function Account() {
                         <div className="bg-gray-50 dark:bg-[var(--background-800)] p-4 rounded-lg">
                           <div className="flex items-center space-x-3 mb-2">
                             <FaPhone className="text-[var(--primary-500)]" />
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Telefon</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone number</label>
                           </div>
                           <p className="text-gray-900 dark:text-white">{userData.phone || 'N/A'}</p>
                         </div>
                         <div className="bg-gray-50 dark:bg-[var(--background-800)] p-4 rounded-lg">
                           <div className="flex items-center space-x-3 mb-2">
                             <FaMapMarkerAlt className="text-[var(--primary-500)]" />
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Adresă</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
                           </div>
                           <p className="text-gray-900 dark:text-white">{userData.address || 'N/A'}</p>
                         </div>
@@ -338,7 +355,7 @@ function Account() {
                           whileTap={{ scale: 0.95 }}
                         >
                           <FaEdit />
-                          <span>Editează Detaliile</span>
+                          <span>Edit details</span>
                         </motion.button>
                       </div>
                     </div>
@@ -347,7 +364,7 @@ function Account() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Nume
+                            Name
                           </label>
                           <input
                             type="text"
@@ -373,7 +390,7 @@ function Account() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Telefon
+                            Phone number
                           </label>
                           <input
                             type="text"
@@ -385,7 +402,7 @@ function Account() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Adresă
+                            Address
                           </label>
                           <input
                             type="text"
@@ -438,7 +455,7 @@ function Account() {
                     <div className="grid grid-cols-1 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Parola Curentă
+                          Current password
                         </label>
                         <input
                           type="password"
@@ -451,7 +468,7 @@ function Account() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Parola Nouă
+                          New password
                         </label>
                         <input
                           type="password"
@@ -464,7 +481,7 @@ function Account() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Confirmă Parola Nouă
+                          Confirm new password
                         </label>
                         <input
                           type="password"
@@ -495,7 +512,7 @@ function Account() {
 
             {/* Registration Date */}
             <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-              <p>Data înregistrării: {new Date(userData.registrationDate).toLocaleDateString()}</p>
+              <p>Registration date: {new Date(userData.createdAt).toLocaleDateString()}</p>
             </div>
           </div>
         </motion.div>

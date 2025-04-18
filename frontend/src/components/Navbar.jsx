@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUser, FaSignOutAlt, FaCog, FaMoon, FaSun, FaUserShield, FaUserMd, FaBell } from 'react-icons/fa';
+import { FaUser, FaSignOutAlt, FaCog, FaMoon, FaSun, FaUserShield, FaUserMd, FaBell, FaCalendarAlt, FaNotesMedical } from 'react-icons/fa';
 import maleProfilePicture from '../assets/male_profile_picture.png';
 import femaleProfilePicture from '../assets/female_profile_picture.png';
 import logo from '../assets/elysium-logo.svg';
@@ -30,10 +30,15 @@ function Navbar() {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      
       if (isAuthenticated && !userData) {
         try {
-          const endpoint = userRole === 'doctor' ? '/api/doctors/me' : '/api/auth/me';
-          const response = await apiClient.get(endpoint);
+          const endpoint = userRole === 'doctor' ? '/api/doctors/me' : '/api/patient';
+          const response = await apiClient.get(endpoint, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
           setUserData(response.data);
           setError(null);
         } catch (err) {
@@ -55,7 +60,11 @@ function Navbar() {
       if (now - lastFetchRef.current < 10000) return;
       
       try {
-        const response = await apiClient.get('/api/notifications/');
+        const response = await apiClient.get('/api/notifications', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
         setNotifications(response.data);
         setLoading(false);
         lastFetchRef.current = now;
@@ -189,19 +198,19 @@ function Navbar() {
                 to="/"
                 className="text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                Acasă
+                Home
               </Link>
               <Link
                 to="/doctors"
                 className="text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                Doctori
+                Doctors
               </Link>
               <Link
                 to="/about"
                 className="text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                Despre Noi
+                About us
               </Link>
               {userRole !== 'patient' && isAuthenticated && (
                 <Link
@@ -241,18 +250,18 @@ function Navbar() {
                              markAllAsRead();
                            }}>
                         <span className="mr-2">✓</span>
-                        Marchează toate ca citite
+                        Mark all as read
                       </div>
 
                       {/* Notifications List */}
                       <div className="max-h-[400px] overflow-y-auto">
                         {loading ? (
                           <div className="px-4 py-3 text-center text-gray-400">
-                            Se încarcă...
+                            Loading...
                           </div>
                         ) : notifications.length === 0 ? (
                           <div className="px-4 py-3 text-center text-gray-400">
-                            Nu există notificări
+                            No notifications available
                           </div>
                         ) : (
                           <div>
@@ -285,7 +294,7 @@ function Navbar() {
                           }}
                           className="w-full text-center text-sm text-gray-400 hover:text-white py-3"
                         >
-                          Vezi toate notificările
+                          See all notifications
                         </button>
                       </div>
                     </div>
@@ -335,35 +344,35 @@ function Navbar() {
                         </p>
                       </div>
                       <Link
-                        to={getDashboardLink()}
-                        className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-700"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                      >
-                        {getDashboardIcon()}
-                        Dashboard
-                      </Link>
-                      <Link
                         to="/account"
                         className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-700"
                         onClick={() => setIsProfileMenuOpen(false)}
                       >
                         <FaUser className="mr-3" />
-                        Contul Meu
+                        My account
                       </Link>
                       <Link
-                        to="/settings"
+                        to="/appointments"
                         className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-700"
                         onClick={() => setIsProfileMenuOpen(false)}
                       >
-                        <FaCog className="mr-3" />
-                        Setări
+                        <FaCalendarAlt className="mr-3" />
+                        My appointments
+                      </Link>
+                      <Link
+                        to="/medical-history"
+                        className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-700"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        <FaNotesMedical className="mr-3" />
+                        Medical history
                       </Link>
                       <button
                         onClick={handleLogout}
                         className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-600)] hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <FaSignOutAlt className="mr-3" />
-                        Deconectare
+                        Disconnect
                       </button>
                     </motion.div>
                   )}
@@ -375,13 +384,13 @@ function Navbar() {
                   to="/login"
                   className="text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
-                  Autentificare
+                  Login 
                 </Link>
                 <Link
                   to="/signup"
                   className="bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)] text-white px-4 py-2 rounded-md text-sm font-medium hover:from-[var(--primary-600)] hover:to-[var(--secondary-600)] transition-all"
                 >
-                  Înregistrare
+                  Sign Up
                 </Link>
               </div>
             )}
@@ -433,31 +442,81 @@ function Navbar() {
                 className="block px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Acasă
+                Home
               </Link>
               <Link
                 to="/doctors"
                 className="block px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Doctori
+                Doctors
               </Link>
               <Link
                 to="/about"
                 className="block px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Despre Noi
+                About us
               </Link>
               {isAuthenticated && (
                 <Link
+                  to="/medical-history"
+                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FaNotesMedical className="mr-3" />
+                  Medical History
+                </Link>
+              )}
+              {isAuthenticated && (
+                <Link
+                  to="/appointments"
+                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <FaCalendarAlt className="mr-3" />
+                  My Appointments
+                </Link>
+              )}
+              {isAuthenticated && (
+                <Link
                   to={getDashboardLink()}
-                  className="flex items-center px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
+                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {getDashboardIcon()}
                   {userRole === 'admin' ? 'Admin' : userRole === 'doctor' ? 'Doctor' : 'Dashboard'}
                 </Link>
+              )}
+              { isAuthenticated && (
+                <Link
+                  to="/account"
+                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
+                  onClick={() => setIsMenuOpen(false)}>
+                  <FaUser className="mr-3" />
+                    My account
+                </Link>)}
+                {isAuthenticated && (
+                <button
+                  onClick={() => handleLogout}
+                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium">
+                        <FaSignOutAlt className="mr-3" />Disconnect
+                </button>
+              )}
+              { !isAuthenticated && (
+                <Link
+                to="/login"
+                className="block px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
+              >
+                Login 
+              </Link>
+              )}
+              { !isAuthenticated && (
+                <Link
+                to="/signup"
+                className="block px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium">
+                Sign Up
+              </Link>
               )}
             </div>
           </motion.div>

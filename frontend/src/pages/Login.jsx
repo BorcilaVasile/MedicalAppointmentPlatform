@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import CompanyInfo from '../components/CompanyInfo';
-import googleLogo from '../assets/google-icon.png';
 import apiClient from '../config/api';
 
 const Login = () => {
@@ -15,20 +14,24 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
+      console.log("Entered login function")
+      console.log('Sending request to backend: ', { email, password });
       const response = await apiClient.post('/api/auth/login', {
         email,
         password
       });
 
-      await login(response.data.token, response.data.role);
-
+      console.log('Received response from backend: ', response.data);
+      await login(response.data.token, response.data.userType);
+      console.log('Passed login stage...');
       // Redirect based on role
-      if (response.data.role === 'admin') {
+      if (response.data.userType === 'Admin') {
         navigate('/admin/dashboard');
       } else {
         navigate('/');
@@ -68,7 +71,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-2 border border-[var(--text-400)] dark:border-[var(--text-600)] rounded-md bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-colors"
                 placeholder="Enter your email"
-                required
+                //required
               />
             </div>
             <div>
@@ -79,8 +82,8 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-2 border border-[var(--text-400)] dark:border-[var(--text-600)] rounded-md bg-[var(--background-50)] dark:bg-[var(--background-950)] text-[var(--text-800)] dark:text-[var(--text-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)] transition-colors"
                 placeholder="Enter your password"
-                required
-              />
+                //required
+              />  
             </div>
             <button
               type="submit"

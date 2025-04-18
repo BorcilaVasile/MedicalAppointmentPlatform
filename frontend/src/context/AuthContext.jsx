@@ -63,6 +63,14 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  const register = async (token, role) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('userRole', role);
+    setToken(token);
+    setUserRole(role);
+    setIsAuthenticated(true);
+  };
+
   if (loading) {
     return null; // or a loading spinner
   }
@@ -75,6 +83,7 @@ export const AuthProvider = ({ children }) => {
         token,
         login,
         logout,
+        register
       }}
     >
       {children}

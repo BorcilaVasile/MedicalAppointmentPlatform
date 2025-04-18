@@ -17,43 +17,43 @@ const carouselImages = [clinic, doctorsImg, pacients];
 // Date pentru domenii medicale
 const domains = [
   { 
-    name: 'Cardiologie', 
-    description: 'Îngrijire specializată pentru afecțiunile inimii.',
+    name: 'Cardiology', 
+    description: 'Specialized care for heart conditions',
     icon: <FaHeartbeat className="w-10 h-10" />
   },
   { 
-    name: 'Pediatrie', 
-    description: 'Servicii medicale pentru copii de toate vârstele.',
+    name: 'Pediatrics', 
+    description: 'Medical services for children of all ages',
     icon: <FaBaby className="w-10 h-10" />
   },
   { 
-    name: 'Ortopedie', 
-    description: 'Tratament pentru afecțiunile oaselor și articulațiilor.',
+    name: 'Orthopedics', 
+    description: 'Treatment for bone and joint disorders',
     icon: <FaBone className="w-10 h-10" />
   },
   { 
-    name: 'Dermatologie', 
-    description: 'Îngrijirea pielii și tratamente pentru afecțiuni dermatologice.',
+    name: 'Dermatology', 
+    description: 'Skin care and treatment for dermatological conditions',
     icon: <FaAllergies className="w-10 h-10" />
-  },
+  }
 ];
 
 // Date pentru caracteristici
 const features = [
   {
     icon: <FaUserMd className="w-8 h-8" />,
-    title: "Medici Specialiști",
-    description: "Acces la cei mai buni medici specialiști din diverse domenii medicale."
+    title: "Medical specialists",
+    description: "Access to top specialist doctors across multiple medical fields."
   },
   {
     icon: <FaCalendarAlt className="w-8 h-8" />,
-    title: "Programări Online",
-    description: "Sistem simplu și rapid de programări online, disponibil 24/7."
+    title: "Online appointments",
+    description: "Seamless 24/7 scheduling with just a few clicks."
   },
   {
     icon: <FaClinicMedical className="w-8 h-8" />,
-    title: "Clinici Moderne",
-    description: "Rețea de clinici moderne, dotate cu echipamente de ultimă generație."
+    title: "Advanced medical centers",
+    description: "A premium network of contemporary medical facilities with advanced diagnostic technology."
   }
 ];
 
@@ -105,7 +105,7 @@ function Home() {
               transition={{ duration: 0.8 }}
               className="text-4xl md:text-6xl font-bold mb-6 leading-tight"
             >
-              Îngrijire medicală personalizată pentru tine
+              Personalized medical care tailored for you. 
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -113,7 +113,7 @@ function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-xl md:text-2xl mb-10 font-light"
             >
-              Platforma care te conectează cu cei mai buni specialiști medicali din România
+              Your gateway to Romania's finest healthcare professionals.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -125,14 +125,14 @@ function Home() {
                 to="/doctors" 
                 className="bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-white font-medium py-3 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
               >
-                Găsește un doctor
+                Find a doctor
                 <FaArrowRight className="transform transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
               <Link 
                 to="/about" 
                 className="bg-transparent hover:bg-white/20 text-white border border-white font-medium py-3 px-8 rounded-full transition-all duration-300"
               >
-                Despre noi
+                About us
               </Link>
             </motion.div>
           </div>
@@ -159,9 +159,9 @@ function Home() {
       <section className="py-16 bg-gradient-to-b from-[var(--background-50)] to-[var(--background-100)] dark:from-[var(--background-800)] dark:to-[var(--background-900)]">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[var(--text-900)] dark:text-[var(--text-50)]">Experiență medicală de excepție</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[var(--text-900)] dark:text-[var(--text-50)]">Exceptional medical expertise</h2>
             <p className="text-lg text-[var(--text-700)] dark:text-[var(--text-200)] leading-relaxed">
-              La Elysium Medical, ne-am dedicat să oferim pacienților noștri cea mai bună îngrijire medicală, cu acces la specialiști și facilități de top.
+            Elysium Medical is committed to delivering excellence in patient care through access to leading medical specialists and premium healthcare facilities.
             </p>
           </div>
 
@@ -202,10 +202,10 @@ function Home() {
               viewport={{ once: true }}
               className="text-3xl md:text-4xl font-bold mb-6 text-[var(--text-900)] dark:text-[var(--text-50)]"
             >
-              Domenii de Specialitate
+              Areas of specialization
             </motion.h2>
             <p className="text-lg text-[var(--text-700)] dark:text-[var(--text-200)] leading-relaxed">
-              Oferim servicii medicale în multiple domenii de specialitate, acoperind o gamă vastă de nevoi medicale.
+              Our comprehensive medical services span numerous specialties to address all your healthcare requirements.
             </p>
           </div>
           
@@ -239,10 +239,10 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[var(--text-900)] dark:text-white">
-              Doctorii noștri de top
+              Our leading medical specialists
             </h2>
             <p className="text-lg text-[var(--text-700)] dark:text-[var(--text-100)] leading-relaxed mb-10">
-              Profesioniști dedicați și cu experiență vastă în domeniile lor de specialitate.
+              Highly skilled and experienced specialists committed to excellence in their fields
             </p>
           </div>
           <DoctorsSlider />
@@ -254,10 +254,10 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[var(--text-900)] dark:text-white">
-              Clinici moderne, tehnologie avansată
+              Modern clinics and advanced techonlogy
             </h2>
             <p className="text-lg text-[var(--text-700)] dark:text-[var(--text-100)] leading-relaxed mb-10">
-              Rețeaua noastră de clinici dispune de cea mai modernă infrastructură și tehnologie medicală.
+              Our network of clinics is equipped with the most modern infrastructure and medical technology.
             </p>
           </div>
           <ClinicsSlider />
@@ -269,16 +269,16 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
-              Pregătit să îți îmbunătățești sănătatea?
+              Ready to take your healthcare to the next level?
             </h2>
             <p className="text-xl text-white/90 mb-8">
-              Programează o consultație chiar astăzi și începe călătoria spre o sănătate mai bună.
+              Make an appointment today and start the journey to a better health.
             </p>
             <Link 
               to="/doctors" 
               className="inline-block bg-white text-[var(--primary-700)] dark:text-[var(--primary-800)] font-medium py-3 px-10 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-[var(--background-50)] text-lg"
             >
-              Programează-te acum
+              Make an appointment now
             </Link>
           </div>
         </div>

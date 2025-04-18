@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CompanyInfo from '../components/CompanyInfo'; 
 import googleLogo from '../assets/google-icon.png'; 
+import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../config/api';
 
 function Signup() {
@@ -12,6 +13,7 @@ function Signup() {
   const [gender, setGender] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
+  const { register } = useAuth();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -42,12 +44,19 @@ function Signup() {
     const formData = { name, email, password, gender };
 
     try {
-      const response = await apiClient.post('/api/users', formData);
-      navigate('/login', { 
-        state: { message: 'Cont creat cu succes! Vă rugăm să vă autentificați.' }
+      const response = await apiClient.post('/api/patients', formData);
+      console.log('Registration response:', response);
+      if (response.status !== 201) {
+        setError('Registration failed');
+        return;
+      }
+      await register(response.data.token, response.data.userType);
+      navigate('/', { 
+        state: { message: 'Welcome! You are now logged in.' }
       });
     } catch (err) {
-      setError(err.response?.data?.message || 'A apărut o eroare la înregistrare.');
+      console.log('🔥 Catch error:', err);
+      setError(err.response?.data?.message || 'An error has ocurred at registration.');
     } finally {
       setLoading(false);
     }
@@ -141,9 +150,9 @@ function Signup() {
               <option value="" hidden>
                 Select your gender
               </option>
-              <option value="Masculin">Masculin</option>
-              <option value="Feminin">Feminin</option>
-              <option value="Altul">Altul</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 

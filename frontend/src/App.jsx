@@ -15,6 +15,8 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import Doctors from './pages/Doctors';
 import Notifications from './pages/Notifications';
 import MedicalHistory from './pages/MedicalHistory';
+import MyAppointments from './pages/MyAppointments';
+import MyMedicalHistory from './pages/MyMedicalHistory';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './App.css';
@@ -47,6 +49,16 @@ function App() {
               <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
               <Route path="/doctors" element={<Doctors />} />
               <Route path="/admin/add-doctor" element={<AddDoctor />} />
+              <Route path="/appointments" element={
+                <PrivateRoute>
+                  <MyAppointments />
+                </PrivateRoute>
+              } />
+              <Route path="/medical-history" element={
+                <PrivateRoute>
+                  <MyMedicalHistory />
+                </PrivateRoute>
+              } />
               <Route path="/notifications" element={
                 <PrivateRoute>
                   <Notifications />

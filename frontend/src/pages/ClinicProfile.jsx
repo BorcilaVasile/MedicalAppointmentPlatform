@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaMapMarkerAlt, FaPhone, FaClock, FaCalendar } from 'react-icons/fa';
 import apiClient, { getImageUrl } from '../config/api';
+import maleProfilePicture from '../assets/male_profile_picture.png';
+import femaleProfilePicture from '../assets/female_profile_picture.png';
 
 function ClinicProfile() {
   const { id } = useParams();
@@ -138,7 +140,7 @@ function ClinicProfile() {
             {/* Secțiunea de Doctori */}
             <div className="bg-white dark:bg-[var(--background-900)] rounded-xl shadow-lg p-6">
               <h2 className="text-2xl font-bold text-[var(--text-900)] dark:text-[var(--text-100)] mb-6">
-                Doctori
+                Doctors
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {doctors.map((doctor) => (
@@ -148,16 +150,17 @@ function ClinicProfile() {
                   >
                     <div className="flex items-center gap-4">
                       <img
-                        src={doctor.image ? getImageUrl(doctor.image) : '/default-doctor.jpg'}
-                        alt={doctor.name}
+                        src={doctor.profilePicture ? getImageUrl(doctor.profilePicture) : 
+                          doctor.gender === 'Male' ? maleProfilePicture : femaleProfilePicture}
+                        alt={`${doctor.firstName} ${doctor.lastName}`}
                         className="w-16 h-16 rounded-full object-cover"
                       />
                       <div>
                         <h3 className="text-lg font-semibold text-[var(--text-900)] dark:text-[var(--text-100)]">
-                          Dr. {doctor.name}
+                          Dr. {doctor.firstName} {doctor.lastName}
                         </h3>
                         <p className="text-[var(--text-600)] dark:text-[var(--text-400)]">
-                          {doctor.specialty}
+                          {doctor.specialty.name}
                         </p>
                       </div>
                     </div>

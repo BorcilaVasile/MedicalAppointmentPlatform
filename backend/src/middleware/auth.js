@@ -1,39 +1,38 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
 
-module.exports = function(req, res, next) {
-  // Get token from header
+// Middleware pentru verificarea token-ului JWT
+const authMiddleware = (req, res, next) => {
+  // Obține token-ul din header-ul Authorization (format: "Bearer <token>")
   const token = req.header('Authorization')?.replace('Bearer ', '');
 
-  // Check if no token
   if (!token) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
+    return res.status(401).json({ error: 'Unauthorized access. Invalid token.' });
   }
 
   try {
-    // Verify token
+    // Verifică token-ul folosind JWT_SECRET
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Load user details
-    User.findById(decoded.id)
-      .select('-password')
-      .populate('clinic', 'name address')
-      .then(user => {
-        if (!user) {
-          return res.status(401).json({ message: 'User not found' });
-        }
-        req.user = {
-          ...decoded,
-          details: user
-        };
-        next();
-      })
-      .catch(err => {
-        console.error('Error loading user details:', err);
-        res.status(500).json({ message: 'Server error' });
-      });
-  } catch (err) {
-    console.error('Token verification error:', err);
-    res.status(401).json({ message: 'Token is not valid' });
+
+    // Adaugă informațiile despre utilizator în cerere (req.user)
+    req.user = {
+      id: decoded.id,
+      type: decoded.type, // "Admin", "Patient", sau "Doctor"
+    };
+
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Unauthorized access. Invalid token' });
   }
-}; 
+};
+
+// Middleware opțional pentru a restricționa accesul la anumite tipuri de utilizatori
+const restrictTo = (...types) => {
+  return (req, res, next) => {
+    if (!types.includes(req.user.type)) {
+      return res.status(403).json({ error: 'Unauthorized access . Unauthorized user' });
+    }
+    next();
+  };
+};
+
+module.exports = { authMiddleware, restrictTo };

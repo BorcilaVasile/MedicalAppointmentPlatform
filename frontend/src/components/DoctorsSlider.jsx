@@ -4,6 +4,8 @@ import { useKeenSlider } from 'keen-slider/react';
 import 'keen-slider/keen-slider.min.css';
 import apiClient, { getImageUrl } from '../config/api';
 import { FaUserMd, FaHospital, FaCalendar } from 'react-icons/fa';
+import maleProfilePicture from '../assets/male_profile_picture.png';
+import femaleProfilePicture from '../assets/female_profile_picture.png';
 
 // Funcții ajutătoare
 const calculateAverageRating = (reviews) => {
@@ -59,10 +61,11 @@ function DoctorsSlider() {
     const fetchDoctors = async () => {
       try {
         const response = await apiClient.get('/api/doctors');
+        console.log('Doctors response:', response.data);
         setDoctors(response.data);
         setLoading(false);
       } catch (err) {
-        setError(err.response?.data?.message || 'Nu s-au putut încărca doctorii');
+        setError(err.response?.data?.message || 'Doctors couldn\'t be loaded');
         setLoading(false);
       }
     };
@@ -70,7 +73,14 @@ function DoctorsSlider() {
     fetchDoctors();
   }, []);
 
-  if (loading) return <div className="text-center py-8">Se încarcă...</div>;
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
   if (error) return <div className="text-center text-red-500 py-8">{error}</div>;
 
   return (
@@ -80,16 +90,17 @@ function DoctorsSlider() {
           <div key={doctor._id} className="keen-slider__slide">
             <div className="bg-white rounded-lg shadow-lg overflow-hidden mx-2">
               <img
-                src={getImageUrl(doctor.profilePicture) || '/default-doctor.jpg'}
+                src={doctor.profilePicture ? getImageUrl(doctor.profilePicture) :
+                  doctor.gender=='Male' ? maleProfilePicture : femaleProfilePicture}
                 alt={doctor.name}
-                className="w-full h-48 object-cover"
+                className="w-auto h-48 object-cover flex justify-center items-center mx-auto"
               />
               <div className="p-4">
-                <h3 className="text-xl font-semibold">{doctor.name}</h3>
+                <h3 className="text-xl font-semibold">{doctor.firstName} {doctor.lastName}</h3>
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center text-gray-600">
                     <FaUserMd className="mr-2" />
-                    <span>{doctor.specialization}</span>
+                    <span>{doctor.specialty.name}</span>
                   </div>
                   {doctor.clinic && (
                     <div className="flex items-center text-gray-600">
@@ -106,7 +117,7 @@ function DoctorsSlider() {
                   to={`/doctors/${doctor._id}`}
                   className="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
                 >
-                  Vezi profil
+                  See profil
                 </Link>
               </div>
             </div>

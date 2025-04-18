@@ -1,6 +1,6 @@
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+// export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+export const API_BASE_URL = 'http://localhost:5000'; 
 // Create axios instance with default config
 import axios from 'axios';
 

@@ -61,11 +61,14 @@ const DoctorsList = ({ onRefresh }) => {
 
   const totalPages = Math.ceil(totalDoctors / ITEMS_PER_PAGE);
 
-  if (loading) return (
-    <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] rounded-xl shadow-lg p-6">
-      <div className="text-center text-[var(--text-600)] dark:text-[var(--text-400)]">Loading doctors...</div>
-    </div>
-  );
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
   
   if (error) return (
     <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] rounded-xl shadow-lg p-6">
