@@ -13,8 +13,6 @@ router.get('/doctor/:id', async (req, res) => {
         const { startDate, endDate } = req.query;
 
         console.log('Doctor ID:', doctorId);
-        console.log('Start Date:', startDate);
-        console.log('End Date:', endDate);
         
         if (!mongoose.Types.ObjectId.isValid(doctorId)) {
             return res.status(400).json({ error: 'ID doctor invalid' });
@@ -72,6 +70,9 @@ router.get('/doctor/:id', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+
+
+
 
 // Ruta pentru crearea unei noi programări
 router.post('/', authMiddleware ,

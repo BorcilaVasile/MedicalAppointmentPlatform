@@ -33,7 +33,7 @@ function Navbar() {
       
       if (isAuthenticated && !userData) {
         try {
-          const endpoint = userRole === 'doctor' ? '/api/doctors/me' : '/api/patient';
+          const endpoint = userRole === 'Doctor' ? '/api/doctor' : '/api/patient';
           const response = await apiClient.get(endpoint, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -60,7 +60,12 @@ function Navbar() {
       if (now - lastFetchRef.current < 10000) return;
       
       try {
-        const response = await apiClient.get('/api/notifications', {
+        // Endpoint diferit în funcție de tipul utilizatorului
+        const endpoint = userRole === 'Doctor' 
+          ? '/api/notifications/doctor' 
+          : '/api/notifications';
+        
+        const response = await apiClient.get(endpoint, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
@@ -96,7 +101,7 @@ function Navbar() {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, userRole]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -132,9 +137,9 @@ function Navbar() {
 
   const getDashboardLink = () => {
     switch (userRole) {
-      case 'admin':
+      case 'Admin':
         return '/admin/dashboard';
-      case 'doctor':
+      case 'Doctor':
         return '/doctor/dashboard';
       default:
         return '/*';
@@ -155,7 +160,12 @@ function Navbar() {
   const handleNotificationClick = async (notification) => {
     if (!notification.read) {
       try {
-        await apiClient.put(`/api/notifications/${notification._id}/read`);
+        // Endpoint diferit în funcție de tipul utilizatorului
+        const endpoint = userRole === 'Doctor'
+          ? `/api/notifications/doctor/${notification._id}/read`
+          : `/api/notifications/${notification._id}/read`;
+          
+        await apiClient.put(endpoint);
         setNotifications(prevNotifications =>
           prevNotifications.map(n =>
             n._id === notification._id ? { ...n, read: true } : n
@@ -171,7 +181,12 @@ function Navbar() {
 
   const markAllAsRead = async () => {
     try {
-      await apiClient.put('/api/notifications/read-all');
+      // Endpoint diferit în funcție de tipul utilizatorului
+      const endpoint = userRole === 'Doctor'
+        ? '/api/notifications/doctor/read-all'
+        : '/api/notifications/read-all';
+        
+      await apiClient.put(endpoint);
       setNotifications(prevNotifications =>
         prevNotifications.map(n => ({ ...n, read: true }))
       );
@@ -212,13 +227,13 @@ function Navbar() {
               >
                 About us
               </Link>
-              {userRole !== 'patient' && isAuthenticated && (
+              {userRole !== 'Patient' && isAuthenticated && (
                 <Link
                   to={getDashboardLink()}
                   className="flex items-center text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   {getDashboardIcon()}
-                  {userRole === 'admin' ? 'Admin' : userRole === 'doctor' ? 'Doctor' : ''}
+                  {userRole === 'Admin' ? 'Admin' : userRole === 'Doctor' ? 'Doctor' : ''}
                 </Link>
               )}
             </div>
@@ -319,7 +334,17 @@ function Navbar() {
                 >
                   <div className="relative">
                     <img
-                      src={userData?.profilePicture ? getImageUrl(userData.profilePicture) : (userData?.gender === 'F' ? femaleProfilePicture : maleProfilePicture)}
+                      src={
+                        userRole === 'Doctor' && userData?.image
+                          ? getImageUrl(userData.image)
+                          : userData?.profilePicture
+                            ? getImageUrl(userData.profilePicture)
+                            : userData?.gender === 'Female' || userData?.gender === 'Male'
+                              ? userData?.gender === 'Female'
+                                ? femaleProfilePicture
+                                : maleProfilePicture
+                              : maleProfilePicture
+                      }
                       alt="Profile"
                       className="w-10 h-10 rounded-full object-cover border-2 border-[var(--primary-500)]"
                     />
@@ -337,7 +362,10 @@ function Navbar() {
                     >
                       <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                         <p className="text-sm font-medium text-[var(--text-900)] dark:text-[var(--text-100)]">
-                          {userData?.name || 'Utilizator'}
+                          {userRole === 'Doctor' 
+                            ? userData ? `${userData.firstName || ''} ${userData.lastName || ''}` : 'Doctor'
+                            : userData?.name || 'Utilizator'
+                          }
                         </p>
                         <p className="text-xs text-[var(--text-500)] dark:text-[var(--text-400)]">
                           {userData?.email || 'Email indisponibil'}
@@ -359,14 +387,16 @@ function Navbar() {
                         <FaCalendarAlt className="mr-3" />
                         My appointments
                       </Link>
-                      <Link
-                        to="/medical-history"
-                        className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-700"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                      >
-                        <FaNotesMedical className="mr-3" />
-                        Medical history
-                      </Link>
+                      {userRole !== 'Doctor' && (
+                        <Link
+                          to="/medical-history"
+                          className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                        >
+                          <FaNotesMedical className="mr-3" />
+                          Medical history
+                        </Link>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="flex items-center w-full px-4 py-2 text-sm text-[var(--text-600)] hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -458,7 +488,7 @@ function Navbar() {
               >
                 About us
               </Link>
-              {isAuthenticated && (
+              {isAuthenticated && userRole !== 'Doctor' && (
                 <Link
                   to="/medical-history"
                   className="inline-flex items-center px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
@@ -498,7 +528,7 @@ function Navbar() {
                 </Link>)}
                 {isAuthenticated && (
                 <button
-                  onClick={() => handleLogout}
+                  onClick={handleLogout}
                   className="inline-flex items-center px-3 py-2 text-[var(--text-900)] hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium">
                         <FaSignOutAlt className="mr-3" />Disconnect
                 </button>

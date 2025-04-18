@@ -31,6 +31,14 @@ const doctorSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  address: {  
+    type: String, 
+    required: true 
+  },
+  profilePicture: {
+    type: String,
+    default: 'uploads/default.png'
+  },
   specialty: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Speciality',

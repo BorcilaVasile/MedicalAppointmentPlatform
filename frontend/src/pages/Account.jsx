@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import logoutIcon from '../assets/logout.svg';
 import maleProfilePicture from '../assets/male_profile_picture.png';
 import femaleProfilePicture from '../assets/female_profile_picture.png';
-import { FaEdit, FaSave, FaTimes, FaLock, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCamera } from 'react-icons/fa';
+import { FaEdit, FaSave, FaTimes, FaLock, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCamera, FaUserMd, FaHospital, FaBriefcase } from 'react-icons/fa';
 import apiClient, { getImageUrl } from '../config/api';
 
 function Account() {
-  const { logout } = useAuth();
+  const { logout, userRole } = useAuth();
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -18,6 +18,18 @@ function Account() {
     profilePicture: '',
     registrationDate: '',
     gender: '',
+  });
+  const [doctorData, setDoctorData] = useState({
+    firstName: '',
+    lastName: '',
+    specialty: '',
+    clinic: '',
+    experience: '',
+    description: '',
+    profilePicture: '',
+    phone: '',
+    gender: '',
+    registrationDate: '',
   });
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -37,6 +49,7 @@ function Account() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
   const navigate = useNavigate();
+  const isDoctor = userRole === 'Doctor';
 
   // Fetch user data on page load
   useEffect(() => {
@@ -44,22 +57,56 @@ function Account() {
       try {
         setLoading(true);
         console.log('Fetching user data...');
-        const response = await apiClient.get('/api/patient', {
+        
+        // Endpoint diferit în funcție de tipul utilizatorului
+        const endpoint = isDoctor ? '/api/doctor' : '/api/patient';
+        
+        const response = await apiClient.get(endpoint, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
         console.log('User data fetched:', response.data);
-        setUserData(response.data);
-        setFormData({
-          name: response.data.name,
-          email: response.data.email,
-          phone: response.data.phone || '',
-          address: response.data.address || '',
-          gender: response.data.gender || '',
-          profilePicture: response.data.profilePicture || '',
-          createdAt: response.data.createdAt || ''
-        });
+        
+        // Pentru doctor, ajustăm datele pentru a se potrivi cu structura noastră
+        if (isDoctor) {
+          setUserData({
+            name: `${response.data.firstName} ${response.data.lastName}`,
+            email: response.data.email || '',
+            phone: response.data.phone || '',
+            address: response.data.address || '',
+            specialty: response.data.specialty?.name || '',
+            clinic: response.data.clinic?.name || '',
+            experience: response.data.experience || '',
+            gender: response.data.gender || '',
+            profilePicture: response.data.image || '',
+            createdAt: response.data.createdAt || ''
+          });
+          setFormData({
+            name: `${response.data.firstName} ${response.data.lastName}`,
+            email: response.data.email || '',
+            phone: response.data.phone || '',
+            address: response.data.address || '',
+            specialty: response.data.specialty?.name || '',
+            clinic: response.data.clinic?.name || '',
+            experience: response.data.experience || '',
+            gender: response.data.gender || '',
+            profilePicture: response.data.image || '',
+            createdAt: response.data.createdAt || ''
+          });
+        } else {
+          // Pentru pacient, folosim datele așa cum sunt
+          setUserData(response.data);
+          setFormData({
+            name: response.data.name,
+            email: response.data.email,
+            phone: response.data.phone || '',
+            address: response.data.address || '',
+            gender: response.data.gender || '',
+            profilePicture: response.data.profilePicture || '',
+            createdAt: response.data.createdAt || ''
+          });
+        }
       } catch (err) {
         setError(err.response?.data?.message || 'Eroare la preluarea datelor utilizatorului');
         if (err.response?.status === 401) {
@@ -72,7 +119,7 @@ function Account() {
     };
 
     fetchUserData();
-  }, [logout, navigate]);
+  }, [logout, navigate, isDoctor]);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -109,24 +156,49 @@ function Account() {
       const formDataToSend = new FormData();
       
       // Append only changed fields to optimize payload
-      if (formData.name) formDataToSend.append('name', formData.name);
+      if (formData.name) {
+        // Pentru doctor, divizăm numele în firstName și lastName
+        if (isDoctor) {
+          const nameParts = formData.name.split(' ');
+          const firstName = nameParts[0];
+          const lastName = nameParts.slice(1).join(' ');
+          formDataToSend.append('firstName', firstName);
+          formDataToSend.append('lastName', lastName);
+        } else {
+          formDataToSend.append('name', formData.name);
+        }
+      }
+      
       if (formData.email) formDataToSend.append('email', formData.email);
       if (formData.phone) formDataToSend.append('phone', formData.phone);
       if (formData.address) formDataToSend.append('address', formData.address);
+      
       if (profilePicture instanceof File) {
-        formDataToSend.append('profilePicture', profilePicture);
+        formDataToSend.append(isDoctor ? 'profilePicture' : 'profilePicture', profilePicture);
       }
       
-  
-      const response = await apiClient.put('/api/patient', formDataToSend, {
+      // Endpoint diferit în funcție de tipul utilizatorului
+      const endpoint = isDoctor ? '/api/doctor' : '/api/patient';
+      
+      const response = await apiClient.put(endpoint, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
   
-      // Update state
-      setUserData(response.data.patient);
+      // Update state - adaptăm pentru răspunsurile diferite
+      if (isDoctor) {
+        // Răspunsul pentru doctori poate varia în funcție de implementarea API-ului
+        const doctorData = response.data.doctor || response.data;
+        setUserData({
+          ...doctorData,
+          name: `${doctorData.firstName} ${doctorData.lastName}`
+        });
+      } else {
+        setUserData(response.data.patient || response.data);
+      }
+      
       setIsEditing(false);
       setSuccess('Datele au fost actualizate cu succes!');
       setTimeout(() => setSuccess(''), 3000);
@@ -144,12 +216,24 @@ function Account() {
 
   // Cancel editing
   const handleCancel = () => {
-    setFormData({
-      name: userData.name,
-      email: userData.email,
-      phone: userData.phone || '',
-      address: userData.address || '',
-    });
+    if (isDoctor) {
+      setFormData({
+        name: `${userData.firstName || ''} ${userData.lastName || ''}`,
+        email: userData.email || '',
+        phone: userData.phone || '',
+        address: userData.address || '',
+        specialty: userData.specialty?.name || '',
+        clinic: userData.clinic?.name || '',
+        experience: userData.experience || ''
+      });
+    } else {
+      setFormData({
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone || '',
+        address: userData.address || '',
+      });
+    }
     setProfilePicture(null);
     setIsEditing(false);
     setError('');
@@ -176,7 +260,10 @@ function Account() {
     }
 
     try {
-      await apiClient.put('/api/patient/password', {
+      // Endpoint diferit în funcție de tipul utilizatorului
+      const endpoint = isDoctor ? '/api/doctor/password' : '/api/patient/password';
+      
+      await apiClient.put(endpoint, {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
@@ -199,6 +286,45 @@ function Account() {
     } catch (err) {
       setError('Failed to log out. Please try again.');
     }
+  };
+
+  // Renderizare condiționată pentru câmpurile specifice doctorului
+  const renderDoctorSpecificFields = () => {
+    if (!isDoctor) return null;
+    
+    return (
+      <>
+        {!isEditing ? (
+          <>
+            <div className="bg-gray-50 dark:bg-[var(--background-800)] p-4 rounded-lg">
+              <div className="flex items-center space-x-3 mb-2">
+                <FaUserMd className="text-[var(--primary-500)]" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Specialitate</label>
+              </div>
+              <p className="text-gray-900 dark:text-white">
+                {userData.specialty?.name || userData.specialty || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-[var(--background-800)] p-4 rounded-lg">
+              <div className="flex items-center space-x-3 mb-2">
+                <FaHospital className="text-[var(--primary-500)]" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Clinică</label>
+              </div>
+              <p className="text-gray-900 dark:text-white">
+                {userData.clinic?.name || userData.clinic || 'N/A'}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-[var(--background-800)] p-4 rounded-lg">
+              <div className="flex items-center space-x-3 mb-2">
+                <FaBriefcase className="text-[var(--primary-500)]" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Experiență</label>
+              </div>
+              <p className="text-gray-900 dark:text-white">{userData.experience ? `${userData.experience} ani` : 'N/A'}</p>
+            </div>
+          </>
+        ) : null /* În modul de editare nu adăugăm aceste câmpuri deoarece specialitatea și clinica se setează din altă parte */}
+      </>
+    );
   };
 
   return (
@@ -235,14 +361,13 @@ function Account() {
                 transition={{ duration: 0.3 }}
               >
                 <img
-                  src={
-                    userData.profilePicture
+                  src={ userData?.profilePicture
                       ? getImageUrl(userData.profilePicture)
-                      : userData.gender === 'Male'
+                      : isDoctor && userData?.gender === 'Male'
                       ? maleProfilePicture
                       : femaleProfilePicture
                   }
-                  alt="Profile"
+                  alt="Profile picture"
                   className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-[var(--background-800)] shadow-lg"
                 />
                 {isEditing && (
@@ -323,7 +448,11 @@ function Account() {
                             <FaUser className="text-[var(--primary-500)]" />
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                           </div>
-                          <p className="text-gray-900 dark:text-white">{userData.name}</p>
+                          <p className="text-gray-900 dark:text-white">
+                            {isDoctor 
+                              ? `${userData.firstName || ''} ${userData.lastName || ''}` 
+                              : userData.name}
+                          </p>
                         </div>
                         <div className="bg-gray-50 dark:bg-[var(--background-800)] p-4 rounded-lg">
                           <div className="flex items-center space-x-3 mb-2">
@@ -346,6 +475,7 @@ function Account() {
                           </div>
                           <p className="text-gray-900 dark:text-white">{userData.address || 'N/A'}</p>
                         </div>
+                        {renderDoctorSpecificFields()}
                       </div>
                       <div className="flex justify-center">
                         <motion.button

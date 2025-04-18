@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {authMiddleware} = require('../middleware/auth');
 const MedicalHistory = require('../models/MedicalHistory');
+const Pacient = require('../models/Patient');
 
 // Get medical history for current user (patient)
 router.get('/me', authMiddleware , async (req, res) => {
@@ -11,7 +12,7 @@ router.get('/me', authMiddleware , async (req, res) => {
         }
 
         const medicalHistory = await MedicalHistory.findOne({ patient: req.user.id })
-            .populate('patient', 'name email')
+            .populate('patient')
             .populate('medications.prescribedBy', 'name');
 
         if (!medicalHistory) {
@@ -28,8 +29,14 @@ router.get('/me', authMiddleware , async (req, res) => {
 // Get medical history for a patient
 router.get('/:patientId', async (req, res) => {
     try {
+
+        console.log('Fetching medical history for patient:', req.params.patientId);
+        const patient = await Pacient.findById(req.params.patientId);
+        if (!patient) {
+            return res.status(404).json({ message: 'Patient not found' });
+        }
         const medicalHistory = await MedicalHistory.findOne({ patient: req.params.patientId })
-            .populate('patient', 'name email')
+            .populate('patient')
             .populate('medications.prescribedBy', 'name')
             .populate('notes.author', 'name');
 

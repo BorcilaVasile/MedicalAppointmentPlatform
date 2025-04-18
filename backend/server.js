@@ -13,10 +13,12 @@ const publicDoctorsRoutes = require('./src/routes/publicDoctorsRoutes');
 const publicClinicRoutes = require('./src/routes/publicClinicRoutes');
 const notificationsRoutes = require('./src/routes/notificationRoutes');
 const privatePatientRoutes = require('./src/routes/privatePatientRoutes');
+const privateDoctorRoutes = require('./src/routes/privateDoctorRoutes');
 const specialtiesRoutes= require('./src/routes/specialitiesRoutes');
 const publicReviewRoutes= require('./src/routes/publicReviewRoutes');
 const publicAppointmentRoutes=require('./src/routes/publicAppointmentsRoutes');
 const medicalHistoryRoutes = require('./src/routes/medicalHistoryRoutes');
+const privateAppointmentRoutes = require('./src/routes/privateAppointmentRoutes');
 
 dotenv.config();
 
@@ -77,11 +79,13 @@ app.use('/api/doctors', publicDoctorsRoutes);
 app.use('/api/clinics', publicClinicRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/patient', privatePatientRoutes);
+app.use('/api/doctor', privateDoctorRoutes);
 app.use('/api/specialties', specialtiesRoutes);
 app.use('/api/reviews', publicReviewRoutes);
 app.use('/api/appointments',publicAppointmentRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/medical-history', medicalHistoryRoutes);
+app.use('/api/doctor-appointments', privateAppointmentRoutes);
 
 
 // Ruta de test
