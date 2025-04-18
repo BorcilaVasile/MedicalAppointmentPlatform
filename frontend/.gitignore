@@ -41,3 +41,15 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Cache
+.cache/
+.npm/
+.eslintcache
+
+# Debug
+debug.log
+debug/
+
+# Uploads
+/uploads/*
