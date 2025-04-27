@@ -5,6 +5,7 @@ import { FaCalendarAlt, FaUser, FaMapMarkerAlt, FaClock, FaSpinner, FaTimes, FaI
 import apiClient from '../config/api';
 
 function MyAppointments() {
+  const { token } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,19 +38,41 @@ function MyAppointments() {
     if (!window.confirm('Are you sure you want to cancel this appointment?')) {
       return;
     }
-
     try {
-      await apiClient.put(`/api/appointments/${appointmentId}/cancel`);
+      const response=await apiClient.put(`/api/appointments/${appointmentId}/cancel`);
       // Update the appointment status locally
       setAppointments(prevAppointments =>
         prevAppointments.map(app =>
           app._id === appointmentId ? { ...app, status: 'cancelled' } : app
         )
       );
+
+      const { appointment } = response.data;
+     if(response){
+           try {
+             await apiClient.post('/api/notifications', {
+               recipient: appointment.doctor._id, 
+               recipientType: 'Doctor',
+               sender: token.id,
+               senderType: 'Patient',
+               type: 'APPOINTMENT_CANCELLED',
+               appointment: appointment._id,
+               message: `${appointment.patient.name} has canceled his appointment for ${format(new Date(appointment.date), 'MMMM d, yyyy')} at ${appointment.time}.`
+             }, {
+               headers: {
+                 Authorization: `Bearer ${localStorage.getItem('token')}`,
+               },
+             });
+           } catch (notificationError) {
+             console.error('Failed to create notification for patient:', notificationError);
+           }
+         }
     } catch (error) {
       console.error('Error cancelling appointment:', error);
       setError(error.response?.data?.message || 'Failed to cancel appointment');
     }
+
+    
   };
 
   const getStatusBadgeClass = (status) => {

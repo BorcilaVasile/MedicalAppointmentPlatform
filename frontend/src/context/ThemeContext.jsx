@@ -16,10 +16,12 @@ export function ThemeProvider({ children }) {
     const root = document.documentElement;
     if (isDarkMode) {
       root.classList.add('dark');
+      root.classList.remove('light');
       root.setAttribute('data-theme', 'dracula');
       localStorage.setItem('theme', 'dark');
     } else {
       root.classList.remove('dark');
+      root.classList.add('light');
       root.setAttribute('data-theme', 'emerald');
       localStorage.setItem('theme', 'light');
     }

@@ -97,7 +97,7 @@ router.put('/password', authMiddleware, async (req, res) => {
         return res.status(400).json({ message: 'Parola curentă este incorectă' });
       }
   
-      doctor.password = await bcrypt.hash(newPassword, 10);
+      doctor.password = newPassword;
       await doctor.save();
   
       res.status(200).json({ message: 'Parola a fost schimbată cu succes!' });

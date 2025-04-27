@@ -4,12 +4,16 @@ import CompanyInfo from '../components/CompanyInfo';
 import googleLogo from '../assets/google-icon.png'; 
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../config/api';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
+
 
 function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] =useState(false);
+  const [showConfirmPassword, setShowConfirmPassword]= useState(false);
   const [gender, setGender] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
@@ -36,11 +40,6 @@ function Signup() {
       return;
     }
 
-    if (!termsAccepted) {
-      setError('You must agree to the terms & policy');
-      return;
-    }
-
     const formData = { name, email, password, gender };
 
     try {
@@ -62,6 +61,19 @@ function Signup() {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    if(showPassword)
+      setShowPassword(false);
+    else 
+      setShowPassword(true);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    if(showConfirmPassword)
+      setShowConfirmPassword(false);
+    else 
+      setShowConfirmPassword(true);
+  }
   return (
     <div
       className="min-h-screen flex"
@@ -113,9 +125,9 @@ function Signup() {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -123,12 +135,19 @@ function Signup() {
               placeholder="Enter your password"
               required
             />
+            <button
+              type="button"
+              onClick={togglePasswordVisibility}
+              className="absolute right-3 top-1/3 transform -translate-y-1/2 text-[var(--text-600)] dark:text-[var(--text-400)] hover:text-[var(--primary-500)] dark:hover:text-[var(--primary-600)]"
+              >
+              {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+            </button>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
            
             <input
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               id="confirm_password"
               value={confirmPassword}
               onChange={(e) => checkPassword(e.target.value)}
@@ -136,6 +155,13 @@ function Signup() {
               placeholder="Confirm your password"
               required
             />
+            <button
+              type="button"
+              onClick={toggleConfirmPasswordVisibility}
+              className="absolute right-3 top-1/3 transform -translate-y-1/2 text-[var(--text-600)] dark:text-[var(--text-400)] hover:text-[var(--primary-500)] dark:hover:text-[var(--primary-600)]"
+              >
+              {showConfirmPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+            </button>
           </div>
 
           <div className="space-y-2">
@@ -154,29 +180,6 @@ function Signup() {
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
-          </div>
-
-          {/* Terms & Policy Checkbox */}
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="terms"
-              checked={termsAccepted}
-              onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="h-4 w-4 text-[var(--primary-500)] dark:text-[var(--primary-600)] border-[var(--text-300)] dark:border-[var(--text-700)] rounded focus:ring-[var(--primary-500)] dark:focus:ring-[var(--primary-600)]"
-            />
-            <label
-              htmlFor="terms"
-              className="text-sm text-[var(--text-700)] dark:text-[var(--text-300)]"
-            >
-              I agree to the{' '}
-              <a
-                href="/terms"
-                className="text-[var(--primary-500)] dark:text-[var(--primary-600)] hover:underline"
-              >
-                terms & policy
-              </a>
-            </label>
           </div>
 
           <button

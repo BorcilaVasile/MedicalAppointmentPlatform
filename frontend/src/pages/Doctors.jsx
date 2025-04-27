@@ -108,6 +108,17 @@ const Doctors = () => {
               <div className="mb-6">
                 <h3 className="text-[var(--text-700)] dark:text-[var(--text-300)] mb-3">Gen</h3>
                   <div className="space-y-2">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="gender"
+                      value=""
+                      checked={filters.gender === ''}
+                      onChange={(e) => handleFilterChange('gender', e.target.value)}
+                      className="form-radio text-[var(--primary-500)]"
+                    />
+                    <span className="text-[var(--text-600)] dark:text-[var(--text-400)]">All genders</span>
+                  </label>
                     {['Male', 'Female', 'Other'].map((gender) => (
                     <label key={gender} className="flex items-center space-x-2 cursor-pointer">
                         <input
@@ -153,9 +164,9 @@ const Doctors = () => {
                   className="bg-white dark:bg-[var(--background-800)] rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
                 >
                   <div className="relative">
-                        <img
-                      src={doctor.profilePicture ? getImageUrl(doctor.profilePicture) : 
-                        doctor.gender== 'Male' ?  maleProfilePicture : femaleProfilePicture}
+                        <img src={doctor?.profilePicture ? getImageUrl(doctor.profilePicture) : 
+                                  doctor.gender== 'Male' ?  maleProfilePicture 
+                                  : femaleProfilePicture}
                       alt={doctor.name}
                       className="w-full h-48 object-cover"
                     />

@@ -121,7 +121,7 @@ router.post('/', authMiddleware ,
 
             // Populare date pentru răspuns
             const populatedAppointment = await Appointment.findById(newAppointment._id)
-                .populate('patient', 'name')
+                .populate('patient')
                 .populate('doctor', 'name')
                 .populate('clinic', 'name address');
 
@@ -143,12 +143,12 @@ router.put('/:id/cancel', authMiddleware, async (req, res) => {
         const appointment = await Appointment.findOneAndUpdate(
             {
                 _id: req.params.id,
-                patient: req.user.id, // Doar pacientul poate anula propria programare
                 status: { $in: ['pending', 'confirmed'] } // Doar anularea programărilor nefinalizate
             },
             { status: 'cancelled' },
             { new: true }
-        );
+        ).populate('patient')
+        .populate('doctor');
 
         if (!appointment) {
             return res.status(404).json({ error: 'Appointment not found or cannot be cancelled' });

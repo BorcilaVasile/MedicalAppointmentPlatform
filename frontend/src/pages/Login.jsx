@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import CompanyInfo from '../components/CompanyInfo';
 import apiClient from '../config/api';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -46,6 +48,13 @@ const Login = () => {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    if(showPassword)
+      setShowPassword(false);
+    else 
+      setShowPassword(true);
+  };
+  
   return (
     <div
       className="min-h-screen flex"
@@ -77,9 +86,9 @@ const Login = () => {
                 //required
               />
             </div>
-            <div>
+            <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -87,6 +96,13 @@ const Login = () => {
                 placeholder="Enter your password"
                 //required
               />  
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-600)] dark:text-[var(--text-400)] hover:text-[var(--primary-500)] dark:hover:text-[var(--primary-600)]"
+              >
+                {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+              </button>
             </div>
             <button
               type="submit"

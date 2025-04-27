@@ -135,9 +135,9 @@ function DoctorDashboard() {
   // Handle adding a new entry to medical history
   const handleAddMedicalEntry = async (type) => {
     // Check for patient ID in different possible properties
-    const patientId = selectedCalendarAppointment?.patient || 
-                      selectedCalendarAppointment?.patientId;
+    const patientId = selectedCalendarAppointment?.patient._id;
     
+    console.log('patient id: ', patientId);
     if (!patientId) {
       setMedicalHistoryError('Could not determine patient ID');
       return;
@@ -152,7 +152,31 @@ function DoctorDashboard() {
         : newMedicalEntry;
       
       const endpoint = `/api/medical-history/${patientId}/${type}`;
-      await apiClient.post(endpoint, entryData);
+      const response=await apiClient.post(endpoint, entryData,{
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if(response.status==200)
+      {
+        try {
+          await apiClient.post('/api/notifications', {
+            recipient: patientId, 
+            recipientType: 'Patient',
+            sender: token.id,
+            senderType: 'Doctor',
+            type: 'MEDICAL_HISTORY_UPDATE',
+            message: `A new ${type.slice(0, -1)} entry has been added to your medical history by your doctor.`,
+          }, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+        } catch (notificationError) {
+          console.error('Failed to create notification for patient:', notificationError);
+        }
+      }
       
       // Refresh medical history data
       await fetchPatientMedicalHistory(patientId);
@@ -197,8 +221,12 @@ function DoctorDashboard() {
 
     try {
       // Prima dată anulăm programarea
-      const response = await apiClient.post(`/api/doctors/appointments/${appointmentId}/cancel`, {
+      const response = await apiClient.put(`/api/appointments/${appointmentId}/cancel`, {
         status: 'cancelled'
+      }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
       });
 
       const { appointment } = response.data;
@@ -210,16 +238,25 @@ function DoctorDashboard() {
       setAppointments(updatedAppointments);
 
       // Creăm notificarea pentru pacient
+      if(response){
       try {
         await apiClient.post('/api/notifications', {
-          recipient: appointment.patient,
+          recipient: appointment.patient._id, 
+          recipientType: 'Patient',
+          sender: token.id,
+          senderType: 'Doctor',
           type: 'APPOINTMENT_CANCELLED',
-          appointment: appointmentId,
+          appointment: appointment._id,
           message: `Your appointment for ${format(new Date(appointment.date), 'MMMM d, yyyy')} at ${appointment.time} has been cancelled by the doctor.`
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
         });
       } catch (notificationError) {
         console.error('Failed to create notification for patient:', notificationError);
       }
+    }
 
     } catch (err) {
       console.error('Error in handleCancelAppointment:', err);

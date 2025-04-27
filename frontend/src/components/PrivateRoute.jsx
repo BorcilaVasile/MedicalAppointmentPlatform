@@ -4,16 +4,22 @@ import { useAuth } from '../context/AuthContext';
 
 const PrivateRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, userRole } = useAuth();
+  
+  // Add debugging
+  console.log('PrivateRoute check:', { isAuthenticated, userRole, requiredRole });
 
   if (!isAuthenticated) {
+    console.log('Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  // If a specific role is required, check if the user has that role
-  if (requiredRole && userRole !== requiredRole) {
+  // Case-insensitive role check
+  if (requiredRole && userRole && userRole.toLowerCase() !== requiredRole.toLowerCase()) {
+    console.log(`Role mismatch: required ${requiredRole}, have ${userRole}, redirecting to home`);
     return <Navigate to="/" replace />;
   }
 
+  console.log('Route access granted');
   return children;
 };
 

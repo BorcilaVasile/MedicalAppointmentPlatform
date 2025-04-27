@@ -226,7 +226,28 @@ function DoctorProfileAppointments({ doctorId, token, isAuthenticated }) {
           Authorization: `Bearer ${token}`
         }
       });
-  
+      
+      if (response && response.data) {
+        const createdAppointment = response.data;
+      
+        try {
+          await apiClient.post('/api/notifications', {
+            recipient: doctorId,
+            recipientType: 'Doctor',
+            sender: createdAppointment.patient, // presupunând că serverul trimite `patient` în datele createAppointment
+            senderType: 'Patient',
+            type: 'APPOINTMENT_CREATED',
+            appointment: createdAppointment._id,
+            message: `New appointment scheduled for ${format(selectedDate, 'dd MMMM yyyy', { locale: ro })} at ${selectedTime}`
+          }, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        } catch (notificationError) {
+          console.error('Failed to create notification:', notificationError);
+        }
+      }
       // Reîncarcă datele
       const bookingData = await fetchBookedSlots(currentWeekStart);
       setBookedSlots(bookingData.bookedSlots || {});

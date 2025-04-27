@@ -14,7 +14,6 @@ import AdminDashboard from './pages/AdminDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import Doctors from './pages/Doctors';
 import Notifications from './pages/Notifications';
-import MedicalHistory from './pages/MedicalHistory';
 import MyAppointments from './pages/MyAppointments';
 import MyMedicalHistory from './pages/MyMedicalHistory';
 import { AuthProvider } from './context/AuthContext';
@@ -74,11 +73,6 @@ function App() {
               <Route path="/notifications" element={
                 <PrivateRoute>
                   <Notifications />
-                </PrivateRoute>
-              } />
-              <Route path="/medical-history/:patientId" element={
-                <PrivateRoute>
-                  <MedicalHistory />
                 </PrivateRoute>
               } />
               <Route path="*" element={<NotFound />} />

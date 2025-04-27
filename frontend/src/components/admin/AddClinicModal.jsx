@@ -3,7 +3,7 @@ import { FaTimes, FaHospital, FaMapMarkerAlt, FaImage } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../config/api';
 
-const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
+const AddClinicModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -16,45 +16,46 @@ const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
   const { token } = useAuth();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, files } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: files ? files[0] : value,
     }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({
-        ...prev,
-        image: file
-      }));
-    }
-  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const formData = new FormData();
-    formData.append('name', formData.name);
-    formData.append('address', formData.address);
-    formData.append('phone', formData.phone);
-    formData.append('description', formData.description);
-    if (formData.image) {
-      formData.append('image', formData.image);
+    if (!formData.name || !formData.address || !formData.phone || !formData.image) {
+      setError('Name, address, phone, and image are required');
+      setLoading(false);
+      return;
     }
 
+    const requestData = new FormData();
+    requestData.append('name', formData.name);
+    requestData.append('address', formData.address);
+    requestData.append('phone', formData.phone);
+    requestData.append('description', formData.description);
+    if (formData.image) {
+      requestData.append('image', formData.image);
+    }
+
+    console.log('Form data:', formData);
+    console.log('Request data:', requestData);
     try {
-      await apiClient.post('/api/admin/clinics', formData, {
+      await apiClient.post('/api/admin/clinics', requestData, {
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
-      onClinicAdded(formData);
       onClose();
+      onSuccess();
     } catch (err) {
       console.error('Error adding clinic:', err);
       setError(err.response?.data?.message || 'Failed to add clinic');
@@ -73,7 +74,7 @@ const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
         <div className="relative bg-[var(--background-100)] dark:bg-[var(--background-900)] rounded-xl shadow-xl transform transition-all w-full max-w-2xl">
           <div className="flex items-center justify-between p-6 border-b border-[var(--background-200)] dark:border-[var(--background-700)]">
             <h3 className="text-2xl font-bold text-[var(--text-900)] dark:text-[var(--text-100)]">
-              Adaugă Clinică Nouă
+              Add a new clinic
             </h3>
             <button
               onClick={onClose}
@@ -93,7 +94,7 @@ const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-2">
-                  Nume Clinică
+                  Clinic name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -101,19 +102,20 @@ const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
                   </div>
                   <input
                     type="text"
+                    id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
                     required
                     className="w-full pl-10 pr-4 py-2 border border-[var(--background-200)] dark:border-[var(--background-700)] rounded-lg bg-white dark:bg-[var(--background-800)] text-[var(--text-900)] dark:text-[var(--text-100)] focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
-                    placeholder="Introdu numele clinicii"
+                    placeholder="Insert clinic's name"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-2">
-                  Adresă
+                  Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -121,49 +123,52 @@ const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
                   </div>
                   <input
                     type="text"
+                    id="name"
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
                     required
                     className="w-full pl-10 pr-4 py-2 border border-[var(--background-200)] dark:border-[var(--background-700)] rounded-lg bg-white dark:bg-[var(--background-800)] text-[var(--text-900)] dark:text-[var(--text-100)] focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
-                    placeholder="Introdu adresa clinicii"
+                    placeholder="Insert clinic's address"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-2">
-                  Telefon
+                  Phone number
                 </label>
                 <input
                   type="tel"
                   name="phone"
+                  id="phone"
                   value={formData.phone}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-[var(--background-200)] dark:border-[var(--background-700)] rounded-lg bg-white dark:bg-[var(--background-800)] text-[var(--text-900)] dark:text-[var(--text-100)] focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
-                  placeholder="Introdu numărul de telefon"
+                  placeholder="Insert phone numbers"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-2">
-                  Descriere
+                  Description
                 </label>
                 <textarea
                   name="description"
+                  id="description"
                   value={formData.description}
                   onChange={handleChange}
                   required
                   rows="3"
                   className="w-full px-4 py-2 border border-[var(--background-200)] dark:border-[var(--background-700)] rounded-lg bg-white dark:bg-[var(--background-800)] text-[var(--text-900)] dark:text-[var(--text-100)] focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
-                  placeholder="Introdu o descriere pentru clinică"
+                  placeholder="Insert a description"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] mb-2">
-                  Imagine
+                  Image
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -171,8 +176,9 @@ const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
                   </div>
                   <input
                     type="file"
+                    id="image"
                     name="image"
-                    onChange={handleImageChange}
+                    onChange={handleChange}
                     required
                     accept="image/*"
                     className="w-full pl-10 pr-4 py-2 border border-[var(--background-200)] dark:border-[var(--background-700)] rounded-lg bg-white dark:bg-[var(--background-800)] text-[var(--text-900)] dark:text-[var(--text-100)] focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
@@ -187,14 +193,16 @@ const AddClinicModal = ({ isOpen, onClose, onClinicAdded }) => {
                 onClick={onClose}
                 className="px-4 py-2 text-sm font-medium text-[var(--text-700)] dark:text-[var(--text-300)] hover:text-[var(--text-900)] dark:hover:text-[var(--text-100)] transition-colors"
               >
-                Anulează
+                Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[var(--primary-500)] to-[var(--secondary-500)] rounded-lg hover:from-[var(--primary-600)] hover:to-[var(--secondary-600)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-4 py-2 text-sm font-medium text-white bg-[var(--primary-500)] rounded-md hover:bg-[var(--primary-600)] transition-colors ${
+                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                {loading ? 'Se procesează...' : 'Adaugă Clinică'}
+                {loading ? 'Creating...' : 'Create clinic'}
               </button>
             </div>
           </form>

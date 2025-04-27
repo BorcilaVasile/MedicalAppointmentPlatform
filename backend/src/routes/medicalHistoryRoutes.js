@@ -91,6 +91,28 @@ router.post('/:patientId/medications', authMiddleware,  async (req, res) => {
     }
 });
 
+// Add alergies
+router.post('/:patientId/allergies', authMiddleware,  async (req, res) => {
+    try {
+        const { allergen, severity, reaction } = req.body;
+
+        const medicalHistory = await MedicalHistory.findOneAndUpdate(
+            { patient: req.params.patientId },
+            {
+              $push: {
+                allergies: { allergen, severity, reaction }
+              }
+            },
+            { new: true, upsert: true } // new: returnează documentul actualizat, upsert: creează dacă nu există
+          );
+        
+        res.json(medicalHistory);
+    } catch (error) {
+        console.error('Error adding allergies:', error);
+        res.status(500).json({ message: 'Error adding allergies' });
+    }
+});
+
 // Adaugă semne vitale
 router.post('/:patientId/vitals', authMiddleware , async (req, res) => {
     try {

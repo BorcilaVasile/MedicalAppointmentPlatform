@@ -25,7 +25,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['APPOINTMENT_CREATED', 'APPOINTMENT_CANCELLED', 'APPOINTMENT_UPDATED'],
+    enum: ['APPOINTMENT_CREATED', 'APPOINTMENT_CANCELLED', 'APPOINTMENT_UPDATED', 'MEDICAL_HISTORY_UPDATE'],
     required: true,
   },
   appointment: {

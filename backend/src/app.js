@@ -13,6 +13,10 @@ app.use(express.json());
 const notificationRoutes = require('./routes/notificationRoutes');
 app.use('/api/notifications', auth, notificationRoutes);
 
+// Admin routes
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/api/admin', adminRoutes);
+
 // ... existing code ...
 
 module.exports = app; 

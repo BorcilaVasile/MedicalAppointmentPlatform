@@ -57,11 +57,6 @@ const doctorSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
-  image: { 
-    type: String ,
-    required: true,
-    default: 'uploads/default.png'
-  },
   gender: { 
     type: String, 
     enum: ['Male', 'Female', 'Other'],

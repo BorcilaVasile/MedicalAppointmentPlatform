@@ -20,6 +20,11 @@ const publicReviewRoutes= require('./src/routes/publicReviewRoutes');
 const publicAppointmentRoutes=require('./src/routes/publicAppointmentsRoutes');
 const medicalHistoryRoutes = require('./src/routes/medicalHistoryRoutes');
 const privateAppointmentRoutes = require('./src/routes/privateAppointmentRoutes');
+const adminPatientRoutes = require('./src/routes/adminPatientRoutes');
+const adminDoctorRoutes = require('./src/routes/adminDoctorRoutes');
+const adminClinicRoutes = require('./src/routes/adminClinicRoutes');
+const adminSpecialtiesRoutes = require('./src/routes/adminSpecialtiesRoutes');
+const adminAppointmentsRoutes = require('./src/routes/adminAppointmentsRoutes');
 
 dotenv.config();
 
@@ -81,13 +86,21 @@ app.use('/api/clinics', publicClinicRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/patient', privatePatientRoutes);
 app.use('/api/doctor', privateDoctorRoutes);
+
 app.use('/api/admin', privateAdminRoutes);
+app.use('/api/admin/patients', adminPatientRoutes);
+app.use('/api/admin/doctors', adminDoctorRoutes);
+app.use('/api/admin/clinics', adminClinicRoutes);
+app.use('/api/admin/specialties', adminSpecialtiesRoutes);
+app.use('/api/admin/appointments', adminAppointmentsRoutes);
+
 app.use('/api/specialties', specialtiesRoutes);
 app.use('/api/reviews', publicReviewRoutes);
 app.use('/api/appointments',publicAppointmentRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/medical-history', medicalHistoryRoutes);
 app.use('/api/doctor-appointments', privateAppointmentRoutes);
+
 
 
 // Ruta de test

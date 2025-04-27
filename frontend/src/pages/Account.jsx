@@ -7,9 +7,13 @@ import maleProfilePicture from '../assets/male_profile_picture.png';
 import femaleProfilePicture from '../assets/female_profile_picture.png';
 import { FaEdit, FaSave, FaTimes, FaLock, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCamera, FaUserMd, FaHospital, FaBriefcase } from 'react-icons/fa';
 import apiClient, { getImageUrl } from '../config/api';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 function Account() {
   const { logout, userRole } = useAuth();
+  const [ showCurrentPassword, setShowCurrentPassword]=useState(false);
+  const [ showNewPassword, setShowNewPassword ]=useState(false);
+  const [ showConfirmPassword, setShowConfirmPassword ]= useState(false);
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -86,7 +90,7 @@ function Account() {
             clinic: response.data.clinic?.name || '',
             experience: response.data.experience || '',
             gender: response.data.gender || '',
-            profilePicture: response.data.image || '',
+            profilePicture: response.data.profilePicture || '',
             createdAt: response.data.createdAt || ''
           });
           setFormData({
@@ -98,7 +102,7 @@ function Account() {
             clinic: response.data.clinic?.name || '',
             experience: response.data.experience || '',
             gender: response.data.gender || '',
-            profilePicture: response.data.image || '',
+            profilePicture: response.data.profilePicture || '',
             createdAt: response.data.createdAt || ''
           });
         } else if (isAdmin) {
@@ -277,13 +281,13 @@ function Account() {
     setLoading(true);
 
     if (passwordData.newPassword !== passwordData.confirmNewPassword) {
-      setError('Parolele noi nu se potrivesc!');
+      setError('Password don\'t match!');
       setLoading(false);
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      setError('Parola nouă trebuie să aibă cel puțin 6 caractere.');
+      setError('The password needs to be at least 6 characters long');
       setLoading(false);
       return;
     }
@@ -303,10 +307,10 @@ function Account() {
         newPassword: passwordData.newPassword,
       });
 
-      setSuccess('Parola a fost schimbată cu succes!');
+      setSuccess('Password was changed succesfully!');
       setPasswordData({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
     } catch (err) {
-      setError(err.response?.data?.message || 'Eroare la schimbarea parolei');
+      setError(err.response?.data?.message || 'Error changing the password');
     } finally {
       setLoading(false);
     }
@@ -322,6 +326,28 @@ function Account() {
       setError('Failed to log out. Please try again.');
     }
   };
+
+  const toggleCurrentPasswordVisibility = () => {
+    if(showCurrentPassword)
+      setShowCurrentPassword(false);
+    else 
+      setShowCurrentPassword(true);
+  };
+
+  const toggleNewPasswordVisibility = () => {
+    if(showNewPassword)
+      setShowNewPassword(false);
+    else 
+      setShowNewPassword(true);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    if(showConfirmPassword)
+      setShowConfirmPassword(false);
+    else 
+      setShowConfirmPassword(true);
+  };
+
 
   // Renderizare condiționată pentru câmpurile specifice doctorului
   const renderDoctorSpecificFields = () => {
@@ -396,11 +422,11 @@ function Account() {
                 transition={{ duration: 0.3 }}
               >
                 <img
-                  src={ userData?.profilePicture
-                      ? getImageUrl(userData.profilePicture)
-                      : (isDoctor || isAdmin) && userData?.gender === 'Male'
-                      ? maleProfilePicture
-                      : femaleProfilePicture
+                   src={userData?.profilePicture
+                        ? getImageUrl(userData.profilePicture)
+                        : userData?.gender === 'Female' 
+                        ? femaleProfilePicture
+                        : maleProfilePicture
                   }
                   alt="Profile picture"
                   className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-[var(--background-800)] shadow-lg"
@@ -484,9 +510,7 @@ function Account() {
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                           </div>
                           <p className="text-gray-900 dark:text-white">
-                            {(isDoctor || isAdmin)
-                              ? `${userData.firstName || ''} ${userData.lastName || ''}` 
-                              : userData.name}
+                           {userData.name}
                           </p>
                         </div>
                         <div className="bg-gray-50 dark:bg-[var(--background-800)] p-4 rounded-lg">
@@ -614,48 +638,63 @@ function Account() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-6"
+                  className="flex justify-center w-full"
                 >
-                  <form onSubmit={handleChangePassword} className="space-y-6">
-                    <div className="grid grid-cols-1 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Current password
-                        </label>
+                  <form onSubmit={handleChangePassword} className="space-y-6 w-full max-w-xl">
+                  <div className="grid grid-cols-1 gap-6">
+                      <div className="relative">
                         <input
-                          type="password"
+                          type={showCurrentPassword ? 'text' : 'password'}
                           name="currentPassword"
                           value={passwordData.currentPassword}
                           onChange={handlePasswordChange}
                           className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[var(--background-800)] text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
+                          placeholder='Enter your current password'
                           required
                         />
+                        <button
+                          type="button"
+                          onClick={toggleCurrentPasswordVisibility}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-600)] dark:text-[var(--text-400)] hover:text-[var(--primary-500)] dark:hover:text-[var(--primary-600)]"
+                          >
+                          {showCurrentPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+                          </button>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          New password
-                        </label>
+                      <div className="relative">
                         <input
-                          type="password"
+                          type={showNewPassword ? 'text' : 'password'}
                           name="newPassword"
                           value={passwordData.newPassword}
                           onChange={handlePasswordChange}
                           className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[var(--background-800)] text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
+                          placeholder='Enter your new password'
                           required
                         />
+                        <button
+                          type="button"
+                          onClick={toggleNewPasswordVisibility}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-600)] dark:text-[var(--text-400)] hover:text-[var(--primary-500)] dark:hover:text-[var(--primary-600)]"
+                          >
+                          {showNewPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+                          </button>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Confirm new password
-                        </label>
+                      <div className="relative">
                         <input
-                          type="password"
+                          type={showConfirmPassword ? 'text' : 'password'}
                           name="confirmNewPassword"
                           value={passwordData.confirmNewPassword}
                           onChange={handlePasswordChange}
                           className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[var(--background-800)] text-gray-900 dark:text-white focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent"
+                          placeholder='Confirm your new password'
                           required
                         />
+                        <button
+                          type="button"
+                          onClick={toggleConfirmPasswordVisibility}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--text-600)] dark:text-[var(--text-400)] hover:text-[var(--primary-500)] dark:hover:text-[var(--primary-600)]"
+                          >
+                          {showConfirmPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+                          </button>
                       </div>
                     </div>
                     <div className="flex justify-center">
@@ -667,7 +706,7 @@ function Account() {
                         whileTap={{ scale: 0.95 }}
                       >
                         <FaLock />
-                        <span>{loading ? 'Se salvează...' : 'Schimbă Parola'}</span>
+                        <span>{loading ? 'Saving changes...' : 'Change password'}</span>
                       </motion.button>
                     </div>
                   </form>
