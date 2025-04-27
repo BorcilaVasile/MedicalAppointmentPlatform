@@ -70,7 +70,7 @@ function DoctorDashboard() {
       const endDate = format(end, 'yyyy-MM-dd');
       
       // Get the doctor's ID from the token
-      const doctorId = token.id;
+      const doctorId = token._id;
       
       // Make API request using the correct route
       const response = await apiClient.get(`/api/doctor-appointments`, {
@@ -94,11 +94,22 @@ function DoctorDashboard() {
       
       setAppointments(filteredAppointments);
       
-      // If response includes unavailable slots, use them
-      if (response.data.unavailableSlots) {
-        setUnavailableSlots(response.data.unavailableSlots);
-      }
-      
+
+      let unavailableSlots = [];
+    try {
+      const unavailableResponse = await apiClient.get(`/api/doctor/unavailable-slots`, {
+        params: { startDate, endDate }, 
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        }
+      });
+      unavailableSlots = unavailableResponse.data || [];
+    } catch (unavailableErr) {
+      console.error('Error fetching unavailable slots:', unavailableErr);
+      setError('Failed to load unavailable slots: ' + unavailableErr.message);
+    }
+    setUnavailableSlots(unavailableSlots);
+
       setError(null);
     } catch (err) {
       console.error('Error fetching appointments:', err);
@@ -153,10 +164,10 @@ function DoctorDashboard() {
       
       const endpoint = `/api/medical-history/${patientId}/${type}`;
       const response=await apiClient.post(endpoint, entryData,{
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
 
       if(response.status==200)
       {
@@ -193,8 +204,10 @@ function DoctorDashboard() {
   const handleMarkUnavailable = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.post('/api/doctors/me/unavailable', newUnavailable);
-      setUnavailableSlots(response.data.unavailableSlots);
+      const response = await apiClient.post('/api/doctor/unavailable-slots', newUnavailable, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setUnavailableSlots(prev => [...prev, response.data]); // Append new slot
       setShowUnavailableForm(false);
       setNewUnavailable({
         date: format(new Date(), 'yyyy-MM-dd'),
@@ -209,10 +222,31 @@ function DoctorDashboard() {
 
   const handleDeleteUnavailable = async (slotId) => {
     try {
-      const response = await apiClient.delete(`/api/doctors/me/unavailable/${slotId}`);
-      setUnavailableSlots(response.data.unavailableSlots);
+      await apiClient.delete(`/api/doctor/unavailable-slots/${slotId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setUnavailableSlots(prev => prev.filter(slot => slot._id !== slotId));
+      setError(null);
     } catch (err) {
-      setError(err.message);
+      console.error('Error deleting unavailable slot:', err);
+      setError(err.message || 'Failed to delete unavailable slot');
+    }
+  };
+
+  const updateUnavailableSlots = async (slotId, updatedData) => {
+    try {
+      const doctorId = token._id;
+      await apiClient.put(`/api/doctor/unavailable-slots/${slotId}`, updatedData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      // Update the state by replacing the old entry with the updated one
+      setUnavailableSlots(prev =>
+        prev.map(slot => (slot._id === slotId ? { ...slot, slots: updatedData.slots } : slot))
+      );
+      setError(null);
+    } catch (err) {
+      console.error('Error updating unavailable slot:', err);
+      setError(err.message || 'Failed to update unavailable slot');
     }
   };
 
@@ -359,26 +393,48 @@ function DoctorDashboard() {
                             onClick={() => setSelectedCalendarAppointment(app)}
                             className="text-xs underline text-[var(--primary-500)]"
                           >
-                            Detalii
+                            Details
                           </button>
                         </div>
                       </div>
                     ))}
 
-                    {dayUnavailable?.isFullDay && (
-                      <div className="p-2 bg-gray-100 text-gray-800 rounded text-sm">
-                        Unavailable Day
-                      </div>
-                    )}
+                  {dayUnavailable?.isFullDay && (
+                            <div className="p-2 bg-gray-100 text-gray-800 rounded text-sm flex justify-between items-center">
+                              <span>Unavailable Day</span>
+                              <button
+                                onClick={() => handleDeleteUnavailable(dayUnavailable._id)}
+                                className="p-1 text-red-500 hover:text-red-700"
+                                title="Delete unavailability"
+                              >
+                                <FaTrash size={14} />
+                              </button>
+                            </div>
+                          )}
 
-                    {dayUnavailable?.slots.map(slot => (
-                      <div key={slot} className="p-2 bg-gray-100 text-gray-800 rounded text-sm mb-2">
-                        {slot} - Unavailable
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
+                          {dayUnavailable?.slots.map(slot => (
+                            <div key={slot} className="p-2 bg-gray-100 text-gray-800 rounded text-sm mb-2 flex justify-between items-center">
+                              <span>{slot} - Unavailable</span>
+                              <button
+                                onClick={() => {
+                                  const updatedSlots = dayUnavailable.slots.filter(s => s !== slot);
+                                  const updatedUnavailable = { ...dayUnavailable, slots: updatedSlots };
+                                  if (updatedSlots.length === 0) {
+                                    handleDeleteUnavailable(dayUnavailable._id);
+                                  } else {
+                                    updateUnavailableSlots(dayUnavailable._id, updatedUnavailable);
+                                  }
+                                }}
+                                className="p-1 text-red-500 hover:text-red-700"
+                                title="Delete slot"
+                              >
+                                <FaTrash size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
             </div>
 
             {/* Weekly Calendar - Desktop View */}
@@ -433,21 +489,42 @@ function DoctorDashboard() {
                             onClick={() => setSelectedCalendarAppointment(app)}
                             className="text-xs underline text-[var(--primary-500)]"
                           >
-                            Detalii
+                            Details
                           </button>
                         </div>
                       </div>
                     ))}
 
                     {dayUnavailable?.isFullDay && (
-                      <div className="p-2 bg-gray-100 text-gray-800 rounded text-sm">
-                        Unavailable Day
-                      </div>
-                    )}
+                        <div className="p-2 bg-gray-100 text-gray-800 rounded text-sm flex justify-between items-center">
+                          <span>Unavailable Day</span>
+                            <button
+                              onClick={() => handleDeleteUnavailable(dayUnavailable._id)}
+                              className="p-1 text-red-500 hover:text-red-700"
+                              title="Delete unavailability"                              >
+                                  <FaTrash size={14} />
+                                </button>
+                              </div>
+                            )}
 
-                    {dayUnavailable?.slots.map(slot => (
-                      <div key={slot} className="p-2 bg-gray-100 text-gray-800 rounded text-sm mb-2">
-                        {slot} - Unavailable
+            {dayUnavailable?.slots.map(slot => (
+                      <div key={slot} className="p-2 bg-gray-100 text-gray-800 rounded text-sm mb-2 flex justify-between items-center">
+                        <span>{slot} - Unavailable</span>
+                        <button
+                          onClick={() => {
+                            const updatedSlots = dayUnavailable.slots.filter(s => s !== slot);
+                            const updatedUnavailable = { ...dayUnavailable, slots: updatedSlots };
+                            if (updatedSlots.length === 0) {
+                              handleDeleteUnavailable(dayUnavailable._id);
+                            } else {
+                              updateUnavailableSlots(dayUnavailable._id, updatedUnavailable);
+                            }
+                          }}
+                          className="p-1 text-red-500 hover:text-red-700"
+                          title="Delete slot"
+                        >
+                          <FaTrash size={14} />
+                        </button>
                       </div>
                     ))}
                   </div>

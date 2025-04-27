@@ -6,6 +6,7 @@ const Doctor = require('../models/Doctor');
 const { authMiddleware }=require('../middleware/auth');
 const { check, validationResult } = require('express-validator');
 const multer = require('multer');
+const UnavailableSlot = require('../models/UnavailableSlots');
 
 
 router.get('/', authMiddleware , async (req, res) => {
@@ -108,4 +109,70 @@ router.put('/password', authMiddleware, async (req, res) => {
   });
   
 
+  router.post('/unavailable-slots', authMiddleware, async (req, res) => {
+    try {
+      const newSlot = new UnavailableSlot({
+        doctor: req.user.id,
+        ...req.body
+      });
+      await newSlot.save();
+      res.status(200).json(newSlot);
+    } catch (error) {
+      res.status(500).json({ message: 'Error adding unavailable slot', error: error.message });
+    }
+  });
+
+
+  router.get('/unavailable-slots', authMiddleware , async (req, res) => {
+      try {
+        const { startDate, endDate } = req.query;
+        const slots = await UnavailableSlot.find({
+          doctor: req.user.id,
+          date: { $gte: new Date(startDate), $lte: new Date(endDate) }
+        });
+        res.json(slots);
+      } catch (error) {
+        res.status(500).json({ message: 'Error fetching unavailable slots', error: error.message });
+      }
+    });
+
+    router.delete('/unavailable-slots/:slotId', authMiddleware, async (req, res) => {
+      try {
+        const { slotId } = req.params;
+    
+        // Find and delete the unavailable slot
+        const slot = await UnavailableSlot.findOneAndDelete({
+          _id: slotId,
+          doctor: req.user.id // Ensure the slot belongs to the authenticated doctor
+        });
+    
+        if (!slot) {
+          return res.status(404).json({ message: 'Unavailable slot not found or you do not have permission to delete it' });
+        }
+    
+        res.status(200).json({ message: 'Unavailable slot deleted successfully' });
+      } catch (error) {
+        res.status(500).json({ message: 'Error deleting unavailable slot', error: error.message });
+      }
+    });
+
+    router.put('/unavailable-slots/:slotId', authMiddleware, async (req, res) => {
+      try {
+        const {slotId}= req.params;
+        const updatedSlot = await UnavailableSlot.findOneAndUpdate(
+          { _id: slotId, doctor: req.user.id }, // Add doctor validation
+          req.body,
+          { new: true, runValidators: true }
+        );
+
+        if (!updatedSlot) {
+          return res.status(404).json({ message: 'Unavailable slot not found or you do not have permission to update it' });
+        }
+        
+        res.status(200).json(updatedSlot);
+      } catch (error) {
+        res.status(500).json({ message: 'Error updating unavailable slot', error: error.message });
+      }
+    });
+  
 module.exports = router;

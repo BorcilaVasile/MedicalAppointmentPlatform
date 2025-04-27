@@ -381,7 +381,11 @@ function Navbar() {
                       <div className="px-4 py-2 border-b border-gray-200 light:border-gray-200 dark:border-gray-700">
                         <p className="text-sm font-medium text-[var(--text-900)] light:text-[var(--text-900)] dark:text-[var(--text-100)]">
                           {hasRole('doctor')
-                            ? userData ? `${userData.firstName || ''} ${userData.lastName || ''}` : 'Doctor'
+                          ? userData
+                            ? `${userData.firstName || ''} ${userData.lastName || ''}`
+                            : 'Doctor'
+                          : hasRole('admin')
+                            ? userData?.name || 'Admin'
                             : userData?.name || 'Utilizator'
                           }
                         </p>
@@ -397,6 +401,7 @@ function Navbar() {
                         <FaUser className="mr-3" />
                         My account
                       </Link>
+                      {userRole !== 'Doctor' && userRole !=='Admin' && (
                       <Link
                         to="/appointments"
                         className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] light:text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 light:hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -405,7 +410,8 @@ function Navbar() {
                         <FaCalendarAlt className="mr-3" />
                         My appointments
                       </Link>
-                      {userRole !== 'Doctor' && (
+                      )}
+                      {userRole !== 'Doctor' && userRole !=='Admin' && (
                         <Link
                           to="/medical-history"
                           className="flex items-center px-4 py-2 text-sm text-[var(--text-900)] light:text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-gray-100 light:hover:bg-gray-100 dark:hover:bg-gray-700"

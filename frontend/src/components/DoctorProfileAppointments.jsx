@@ -36,19 +36,30 @@ function DoctorProfileAppointments({ doctorId, token, isAuthenticated }) {
   const fetchBookedSlots = async (weekStart) => {
     try {
       const weekEnd = addDays(weekStart, 6);
-      const response = await apiClient.get(`/api/appointments/doctor/${doctorId}`, {
-        params: {
-          startDate: format(weekStart, 'yyyy-MM-dd'),
-          endDate: format(weekEnd, 'yyyy-MM-dd')
-        },
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const startDate = format(weekStart, 'yyyy-MM-dd');
+      const endDate = format(weekEnd, 'yyyy-MM-dd');
+  
+      // Fetch booked appointments
+      const appointmentResponse = await apiClient.get(`/api/appointments/doctor/${doctorId}`, {
+        params: { startDate, endDate },
+        headers: { Authorization: `Bearer ${token}` }
       });
-      return response.data;
+  
+      // Fetch unavailable slots
+      const unavailableResponse = await apiClient.get(`/api/doctors/${doctorId}/unavailable-slots`, {
+        params: { startDate, endDate },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+  
+      return {
+        bookedSlots: appointmentResponse.data.bookedSlots || {},
+        userAppointments: appointmentResponse.data.userAppointments || {},
+        appointments: appointmentResponse.data.appointments || [],
+        unavailableSlots: unavailableResponse.data || [] // Array of unavailable slots
+      };
     } catch (error) {
-      console.error('Error fetching appointments:', error);
-      return { bookedSlots: {}, userAppointments: {}, appointments: [] };
+      console.error('Error fetching appointments or unavailable slots:', error);
+      return { bookedSlots: {}, userAppointments: {}, appointments: [], unavailableSlots: [] };
     }
   };
 
@@ -89,6 +100,7 @@ function DoctorProfileAppointments({ doctorId, token, isAuthenticated }) {
       const bookingData = await fetchBookedSlots(currentWeekStart);
       const bookedSlotsData = bookingData.bookedSlots || {};
       const userAppointmentsData = bookingData.userAppointments || {};
+      const unavailableSlotsData = bookingData.unavailableSlots || [];
       
       // Generează sloturi disponibile pentru fiecare zi
       const slots = {};
@@ -99,21 +111,34 @@ function DoctorProfileAppointments({ doctorId, token, isAuthenticated }) {
       
       dates.forEach(date => {
         const dateStr = format(date, 'yyyy-MM-dd');
+
+        const unavailableForDate = unavailableSlotsData.find(slot => 
+          isSameDay(new Date(slot.date), date)
+        ) || { slots: [], isFullDay: false };
+
         // Nu generăm sloturi pentru zilele din trecut
         if (isBefore(date, today)) {
+          slots[dateStr] = [];
+          booked[dateStr] = workingHours;
+          slotsCount[dateStr] = 0;
+        }else if (unavailableForDate.isFullDay) {
+          // If the entire day is unavailable
           slots[dateStr] = [];
           booked[dateStr] = workingHours;
           slotsCount[dateStr] = 0;
         } else {
           // Folosim datele reale pentru sloturile rezervate
           const bookedForDate = bookedSlotsData[dateStr] || [];
-          booked[dateStr] = bookedForDate;
+          const unavailableTimes =unavailableForDate.slots || [];
+
+          const combinedBooked = [...new Set([...bookedForDate, ...unavailableTimes])];
+          booked[dateStr] = combinedBooked;
           
           // Toate orele sunt vizibile
           slots[dateStr] = workingHours;
           
           // Calculăm numărul de sloturi disponibile, excluzând orele care au trecut în ziua curentă
-          let availableHoursCount = workingHours.length - bookedForDate.length;
+          let availableHoursCount = workingHours.length - combinedBooked.length;
           
           // Dacă este ziua curentă, excludem orele care au trecut
           if (isSameDay(date, today)) {
@@ -135,9 +160,6 @@ function DoctorProfileAppointments({ doctorId, token, isAuthenticated }) {
           slotsCount[dateStr] = Math.max(0, availableHoursCount);
         }
       });
-      
-      console.log('Available slots:', slots);
-      console.log('Available slots count:', slotsCount);
       
       setAvailableSlots(slots);
       setBookedSlots(booked);
