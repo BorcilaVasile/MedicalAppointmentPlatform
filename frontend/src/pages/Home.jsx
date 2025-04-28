@@ -192,7 +192,7 @@ function Home() {
       </section>
 
       {/* Domenii medicale */}
-      <section className="py-16 bg-[var(--background-50)] dark:bg-[var(--background-950)]">
+      <section className="py-16 bg-gray-600">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <motion.h2
@@ -265,24 +265,25 @@ function Home() {
       </section>
 
       {/* Call to action final */}
-      <section className="py-16 bg-gradient-to-r from-[var(--primary-700)] to-[var(--primary-500)] dark:from-[var(--primary-800)] dark:to-[var(--primary-600)]">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
-              Ready to take your healthcare to the next level?
-            </h2>
-            <p className="text-xl text-white/90 mb-8">
-              Make an appointment today and start the journey to a better health.
-            </p>
-            <Link 
-              to="/doctors" 
-              className="inline-block bg-white text-[var(--primary-700)] dark:text-[var(--primary-800)] font-medium py-3 px-10 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-[var(--background-50)] text-lg"
-            >
-              Make an appointment now
-            </Link>
-          </div>
+    <section className="py-16 bg-gradient-to-tr from-gray-800 to-gray-700">
+      <div className="container mx-auto px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+            Ready to take your healthcare to the next level?
+          </h2>
+          <p className="text-xl text-gray-300 mb-8">
+            Make an appointment today and start the journey to a better health.
+          </p>
+          <Link 
+            to="/doctors" 
+            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-10 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-lg"
+          >
+            Make an appointment now
+          </Link>
         </div>
-      </section>
+      </div>
+    </section>
+
     </div>
   );
 }

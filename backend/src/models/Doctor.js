@@ -83,7 +83,11 @@ const doctorSchema = new mongoose.Schema({
   createdAt: { 
     type: Date, 
     default: Date.now 
-  }
+  },
+  active: { 
+    type: Boolean,
+    default: true,
+  },
 }, { timestamps: true });
 
 // Hash password before saving

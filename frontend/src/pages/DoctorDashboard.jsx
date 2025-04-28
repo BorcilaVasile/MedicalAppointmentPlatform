@@ -28,6 +28,7 @@ function DoctorDashboard() {
     '15:00', '15:30', '16:00', '16:30'
   ]);
   const [availableSlots, setAvailableSlots] = useState([]);
+  const [openDays, setOpenDays] = useState({});
   
   // Medical history states
   const [patientMedicalHistory, setPatientMedicalHistory] = useState(null);
@@ -306,6 +307,18 @@ function DoctorDashboard() {
     );
   }
 
+  const toggleDay = (dayIndex) => {
+    setOpenDays(prev => ({
+      ...prev,
+      [dayIndex]: !prev[dayIndex]
+    }));
+  };
+
+  const today = new Date();
+  const currentWeekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
+  const todayWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const isPrevDisabled = currentWeekStart <= todayWeekStart;
+
   return (
     <div className="min-h-screen bg-[var(--background-50)] dark:bg-[var(--background-950)] p-2 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
@@ -326,7 +339,12 @@ function DoctorDashboard() {
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}
-                className="p-1 sm:p-2 text-sm sm:text-base text-[var(--text-600)] hover:text-[var(--primary-500)]"
+                className={`p-1 sm:p-2 text-sm sm:text-base ${
+                  isPrevDisabled
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-[var(--text-600)] hover:text-[var(--primary-500)]'
+                }`}
+                hidden={isPrevDisabled}
               >
                 ← Prev
               </button>
@@ -343,7 +361,7 @@ function DoctorDashboard() {
             </div>
 
             {/* Weekly Calendar - Mobile View */}
-            <div className="md:hidden">
+            <div className="md:hidden space-y-3">
               {Array.from({ length: 7 }, (_, i) => {
                 const date = addDays(startOfWeek(currentWeek, { weekStartsOn: 1 }), i);
                 const dayAppointments = appointments.filter(app =>
@@ -353,88 +371,103 @@ function DoctorDashboard() {
                   isSameDay(new Date(slot.date), date)
                 );
 
+                const isOpen = openDays[i] || false;
+
                 return (
-                  <div key={i} className="border rounded-lg p-3 mb-3">
-                    <div className="font-medium mb-2">
-                      {format(date, 'EEEE', { locale: enUS })}
-                      <span className="ml-2">{format(date, 'd MMM', { locale: enUS })}</span>
-                    </div>
+                  <div key={i} className="border rounded-lg">
+                    <button
+                      onClick={() => toggleDay(i)}
+                      className="w-full flex justify-between items-center p-3 bg-gray-100 dark:bg-[var(--background-800)] rounded-t-lg focus:outline-none"
+                    >
+                      <div className="font-medium">
+                        {format(date, 'EEEE', { locale: enUS })}
+                        <span className="ml-2">{format(date, 'd MMM', { locale: enUS })}</span>
+                      </div>
+                      <span className="text-sm">
+                        {isOpen ? '▲' : '▼'}
+                      </span>
+                    </button>
 
-                    {dayAppointments.length === 0 && !dayUnavailable && (
-                      <p className="text-sm text-gray-500">No appointments</p>
-                    )}
+                    {isOpen && (
+                      <div className="p-3">
+                        {dayAppointments.length === 0 && !dayUnavailable && (
+                          <p className="text-sm text-gray-500">No appointments</p>
+                        )}
 
-                    {dayAppointments.map(app => (
-                      <div
-                        key={app._id}
-                        className={`p-2 mb-2 rounded text-sm hover:opacity-80 transition-opacity ${app.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                            app.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        {dayAppointments.map(app => (
+                          <div
+                            key={app._id}
+                            className={`p-2 mb-2 rounded text-sm hover:opacity-80 transition-opacity ${
+                              app.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              app.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                               'bg-yellow-100 text-yellow-800'
-                          }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">{app.time}</div>
-                          {app.status !== 'cancelled' && (
+                            }`}
+                          >
+                            <div className="flex justify-between items-center">
+                              <div className="font-medium">{app.time}</div>
+                              {app.status !== 'cancelled' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCancelAppointment(app._id);
+                                  }}
+                                  className="p-1 text-red-500 hover:text-red-700"
+                                  title="Anulează programarea"
+                                >
+                                  <FaTrash size={14} />
+                                </button>
+                              )}
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <div>{app.patientName}</div>
+                              <button
+                                onClick={() => setSelectedCalendarAppointment(app)}
+                                className="text-xs underline text-[var(--primary-500)]"
+                              >
+                                Details
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {dayUnavailable?.isFullDay && (
+                          <div className="p-2 bg-gray-100 text-gray-800 rounded text-sm flex justify-between items-center">
+                            <span>Unavailable Day</span>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCancelAppointment(app._id);
-                              }}
+                              onClick={() => handleDeleteUnavailable(dayUnavailable._id)}
                               className="p-1 text-red-500 hover:text-red-700"
-                              title="Anulează programarea"
+                              title="Delete unavailability"
                             >
                               <FaTrash size={14} />
                             </button>
-                          )}
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <div>{app.patientName}</div>
-                          <button
-                            onClick={() => setSelectedCalendarAppointment(app)}
-                            className="text-xs underline text-[var(--primary-500)]"
-                          >
-                            Details
-                          </button>
-                        </div>
+                          </div>
+                        )}
+
+                        {dayUnavailable?.slots.map(slot => (
+                          <div key={slot} className="p-2 bg-gray-100 text-gray-800 rounded text-sm mb-2 flex justify-between items-center">
+                            <span>{slot} - Unavailable</span>
+                            <button
+                              onClick={() => {
+                                const updatedSlots = dayUnavailable.slots.filter(s => s !== slot);
+                                const updatedUnavailable = { ...dayUnavailable, slots: updatedSlots };
+                                if (updatedSlots.length === 0) {
+                                  handleDeleteUnavailable(dayUnavailable._id);
+                                } else {
+                                  updateUnavailableSlots(dayUnavailable._id, updatedUnavailable);
+                                }
+                              }}
+                              className="p-1 text-red-500 hover:text-red-700"
+                              title="Delete slot"
+                            >
+                              <FaTrash size={14} />
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-
-                  {dayUnavailable?.isFullDay && (
-                            <div className="p-2 bg-gray-100 text-gray-800 rounded text-sm flex justify-between items-center">
-                              <span>Unavailable Day</span>
-                              <button
-                                onClick={() => handleDeleteUnavailable(dayUnavailable._id)}
-                                className="p-1 text-red-500 hover:text-red-700"
-                                title="Delete unavailability"
-                              >
-                                <FaTrash size={14} />
-                              </button>
-                            </div>
-                          )}
-
-                          {dayUnavailable?.slots.map(slot => (
-                            <div key={slot} className="p-2 bg-gray-100 text-gray-800 rounded text-sm mb-2 flex justify-between items-center">
-                              <span>{slot} - Unavailable</span>
-                              <button
-                                onClick={() => {
-                                  const updatedSlots = dayUnavailable.slots.filter(s => s !== slot);
-                                  const updatedUnavailable = { ...dayUnavailable, slots: updatedSlots };
-                                  if (updatedSlots.length === 0) {
-                                    handleDeleteUnavailable(dayUnavailable._id);
-                                  } else {
-                                    updateUnavailableSlots(dayUnavailable._id, updatedUnavailable);
-                                  }
-                                }}
-                                className="p-1 text-red-500 hover:text-red-700"
-                                title="Delete slot"
-                              >
-                                <FaTrash size={14} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Weekly Calendar - Desktop View */}

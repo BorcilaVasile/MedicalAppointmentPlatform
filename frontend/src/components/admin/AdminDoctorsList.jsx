@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { FaTrash, FaChevronLeft, FaChevronRight, FaPlus } from 'react-icons/fa';
+import { FaTrash, FaChevronLeft, FaChevronRight, FaPlus, FaUser, FaEdit } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../config/api';
-import AddDoctorModal from './AddDoctorModal'; // Importă componenta AddDoctorModal
+import AddDoctorModal from './AddDoctorModal';
+import EditDoctorModal from './EditDoctorModal';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -13,7 +15,10 @@ const AdminDoctorsList = ({ onRefresh }) => {
   const [page, setPage] = useState(1);
   const [totalDoctors, setTotalDoctors] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const { token } = useAuth();
+  const navigate = useNavigate();
 
   const fetchDoctors = useCallback(async () => {
     try {
@@ -44,9 +49,22 @@ const AdminDoctorsList = ({ onRefresh }) => {
   }, [fetchDoctors]);
 
   const handleDeleteDoctor = async (doctorId) => {
-    if (!window.confirm('Are you sure you want to delete this doctor?')) {
+   const doctor = doctors.find(d => d._id === doctorId);
+   if (!doctor) {
+     setError('Doctor not found');
+     return;
+   }
+ 
+   // Verifică dacă doctorul este activ
+    if (doctor.active) {
+      alert('Cannot delete an active doctor. Please set the doctor as inactive first.');
       return;
     }
+ 
+   // Afișează confirmarea doar dacă doctorul este inactiv
+   if (!window.confirm('Are you sure you want to delete this doctor?')) {
+     return;
+   }
 
     try {
       await apiClient.delete(`/api/admin/doctors/${doctorId}`, {
@@ -63,9 +81,27 @@ const AdminDoctorsList = ({ onRefresh }) => {
     }
   };
 
+  const handleViewProfile = (doctorId) => {
+    navigate(`/doctors/${doctorId}`);
+  };
+
+  const handleEditDoctor = (doctor) => {
+    setSelectedDoctor(doctor);
+    setIsEditModalOpen(true);
+  };
+
   const handleDoctorAdded = (newDoctor) => {
     setDoctors([...doctors, newDoctor]);
     setTotalDoctors(totalDoctors + 1);
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
+
+  const handleDoctorUpdated = (updatedDoctor) => {
+    setDoctors(doctors.map(doctor => (doctor._id === updatedDoctor._id ? updatedDoctor : doctor)));
+    setIsEditModalOpen(false);
+    setSelectedDoctor(null);
     if (onRefresh) {
       onRefresh();
     }
@@ -100,7 +136,17 @@ const AdminDoctorsList = ({ onRefresh }) => {
       <AddDoctorModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onDoctorAdded={handleDoctorAdded}
+        onSuccess={handleDoctorAdded}
+      />
+
+      <EditDoctorModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedDoctor(null);
+        }}
+        onSuccess={handleDoctorUpdated}
+        doctor={selectedDoctor}
       />
 
       {doctors.length === 0 ? (
@@ -127,8 +173,11 @@ const AdminDoctorsList = ({ onRefresh }) => {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-600)] dark:text-[var(--text-400)] uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-600)] dark:text-[var(--text-400)] uppercase tracking-wider">
+                  <th className="px-6 py-4 text-xs font-semibold text-[var(--text-600)] dark:text-[var(--text-400)] uppercase tracking-wider">
                     Gender
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold text-[var(--text-600)] dark:text-[var(--text-400)] uppercase tracking-wider">
+                    Status
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-[var(--text-600)] dark:text-[var(--text-400)] uppercase tracking-wider">
                     Actions
@@ -139,10 +188,10 @@ const AdminDoctorsList = ({ onRefresh }) => {
                 {doctors.map((doctor) => (
                   <tr key={doctor._id} className="hover:bg-[var(--background-200)] dark:hover:bg-[var(--background-700)] transition-colors duration-200">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-[var(--text-900)] dark:text-[var(--text-100)]">{doctor.firstName} {doctor.lastName}</div>
+                      <div className="text-sm text-left font-medium text-[var(--text-900)] dark:text-[var(--text-100)]">{doctor.firstName} {doctor.lastName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[var(--text-600)] dark:text-[var(--text-400)]">{doctor.email}</div>
+                      <div className="text-sm text-left text-[var(--text-600)] dark:text-[var(--text-400)]">{doctor.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -155,10 +204,36 @@ const AdminDoctorsList = ({ onRefresh }) => {
                         {doctor.gender || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            doctor.active
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          }`}
+                        >
+                          {doctor.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex space-x-3">
+                      <button
+                        onClick={() => handleViewProfile(doctor._id)}
+                        className="text-[var(--primary-500)] hover:text-[var(--primary-700)] dark:text-[var(--primary-400)] dark:hover:text-[var(--primary-300)] transition-colors duration-200"
+                        title="View Profile"
+                      >
+                        <FaUser />
+                      </button>
+                      <button
+                        onClick={() => handleEditDoctor(doctor)}
+                        className="text-[var(--secondary-500)] hover:text-[var(--secondary-700)] dark:text-[var(--secondary-400)] dark:hover:text-[var(--secondary-300)] transition-colors duration-200"
+                        title="Edit Doctor"
+                      >
+                        <FaEdit />
+                      </button>
                       <button
                         onClick={() => handleDeleteDoctor(doctor._id)}
                         className="text-[var(--error-500)] hover:text-[var(--error-700)] dark:text-[var(--error-400)] dark:hover:text-[var(--error-300)] transition-colors duration-200"
+                        title="Delete Doctor"
                       >
                         <FaTrash />
                       </button>
@@ -169,7 +244,6 @@ const AdminDoctorsList = ({ onRefresh }) => {
             </table>
           </div>
 
-          {/* Pagination */}
           <div className="px-6 py-4 flex items-center justify-between border-t border-[var(--background-200)] dark:border-[var(--background-700)]">
             <div className="flex-1 flex justify-between sm:hidden">
               <button

@@ -233,6 +233,7 @@ function Navbar() {
               >
                 Home
               </Link>
+              { (userRole === 'Patient' || !isAuthenticated || userRole=== 'Admin') && (
               <Link
                 to="/doctors"
                 className="light:hover:text-[var(--primary-600)
@@ -240,7 +241,7 @@ function Navbar() {
                     px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Doctors
-              </Link>
+              </Link>)}
               <Link
                 to="/about"
                 className="light:hover:text-[var(--primary-600)

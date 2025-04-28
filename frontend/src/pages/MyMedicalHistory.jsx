@@ -34,7 +34,7 @@ function MyMedicalHistory() {
       setError(null);
     } catch (error) {
       console.error('Error fetching medical history:', error);
-      setError(error.response?.data?.message || 'Nu s-a putut încărca istoricul medical');
+      setError(error.response?.data?.message || 'Failed to load medical history. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -46,7 +46,7 @@ function MyMedicalHistory() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <FaSpinner className="h-12 w-12 animate-spin text-[var(--primary-500)] mx-auto" />
-            <p className="mt-4 text-[var(--text-700)] dark:text-[var(--text-300)]">Se încarcă istoricul medical...</p>
+            <p className="mt-4 text-[var(--text-700)] dark:text-[var(--text-300)]">Loading medical history...</p>
           </div>
         </div>
       </div>
@@ -57,165 +57,284 @@ function MyMedicalHistory() {
     <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow rounded-lg p-6 text-center">
       <FaExclamationTriangle className="h-12 w-12 text-[var(--primary-400)] mx-auto mb-4" />
       <p className="text-[var(--text-700)] dark:text-[var(--text-300)]">
-        Nu există date în această secțiune a istoricului medical.
+        No data available in this section of the medical history.
       </p>
     </div>
   );
 
   const renderConditions = () => (
     <div className="space-y-4">
-      <h3 className="text-xl font-medium text-[var(--text-900)] dark:text-[var(--text-50)]">
-        <FaHeartbeat className="inline-block mr-2 text-[var(--primary-500)]" />
-        Condiții medicale
-      </h3>
       {!medicalHistory?.conditions?.length ? (
         renderNoDataMessage()
       ) : (
-        <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow overflow-hidden sm:rounded-lg">
-          <ul className="divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
-            {medicalHistory.conditions.map((condition, index) => (
-              <li key={index} className="px-4 py-4 sm:px-6">
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-                  <div className="w-full">
-                    <h4 className="text-lg font-medium text-[var(--text-900)] dark:text-[var(--text-50)]">
+        <>
+          {/* Tabel doar pentru desktop */}
+          <div className="hidden md:block bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow overflow-x-auto rounded-lg">
+            <table className="min-w-full divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
+              <thead className="bg-[var(--background-200)] dark:bg-[var(--background-700)]">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Condiție
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Diagnosticat
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Note
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-[var(--background-100)] dark:bg-[var(--background-800)] divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
+                {medicalHistory.conditions.map((condition, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
                       {condition.name}
-                    </h4>
-                    <div className="mt-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <p className="text-sm text-[var(--text-700)] dark:text-[var(--text-300)]">
-                        <span className="inline-block font-medium sm:hidden">Diagnosticat: </span>
-                        {format(new Date(condition.diagnosedDate), 'dd MMMM yyyy')}
-                      </p>
-                      <p className="text-sm flex items-center">
-                        <span className="inline-block font-medium mr-2 sm:hidden">Status: </span>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                          ${condition.status === 'Active' 
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' 
-                            : condition.status === 'Managed' 
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                              : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                          }`}>
-                          {condition.status}
-                        </span>
-                      </p>
-                    </div>
-                    {condition.notes && (
-                      <div className="mt-2 text-sm text-[var(--text-700)] dark:text-[var(--text-300)]">
-                        <span className="font-medium">Note: </span>
-                        {condition.notes}
-                      </div>
-                    )}
-                  </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
+                      {format(new Date(condition.diagnosedDate), 'dd MMMM yyyy')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                      <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold
+                        ${condition.status === 'Active'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                          : condition.status === 'Managed'
+                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                        }`}>
+                        {condition.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
+                      {condition.notes || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+  
+          {/* Variante pentru mobil (listă) */}
+          <div className="md:hidden space-y-4">
+            {medicalHistory.conditions.map((condition, index) => (
+              <div key={index} className="bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow rounded-lg p-4 text-center">
+                <h4 className="text-lg font-medium text-[var(--text-900)] dark:text-[var(--text-50)]">
+                  {condition.name}
+                </h4>
+                <div className="mt-2 text-sm text-[var(--text-700)] dark:text-[var(--text-300)]">
+                  <p><span className="font-medium">Diagnosticat:</span> {format(new Date(condition.diagnosedDate), 'dd MMMM yyyy')}</p>
+                  <p className="mt-2 flex flex-col items-center justify-center">
+                    <span className="font-medium mb-1">Status:</span>
+                    <span className={`inline-flex justify-center px-2 py-1 rounded-full text-xs font-semibold
+                      ${condition.status === 'Active'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                        : condition.status === 'Managed'
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                          : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      }`}>
+                      {condition.status}
+                    </span>
+                  </p>
+                  {condition.notes && (
+                    <p className="mt-2"><span className="font-medium">Note:</span> {condition.notes}</p>
+                  )}
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
-
+  
   const renderAllergies = () => (
     <div className="space-y-4">
-      <h3 className="text-xl font-medium text-[var(--text-900)] dark:text-[var(--text-50)]">
-        <FaAllergies className="inline-block mr-2 text-[var(--primary-500)]" />
-        Alergii
-      </h3>
       {!medicalHistory?.allergies?.length ? (
         renderNoDataMessage()
       ) : (
-        <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow overflow-hidden rounded-lg">
-          <ul className="divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
-            {medicalHistory.allergies.map((allergy, index) => (
-              <li key={index} className="px-6 py-4">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h4 className="text-lg font-medium text-[var(--text-900)] dark:text-[var(--text-50)]">
+        <>
+          {/* Tabel doar pentru desktop */}
+          <div className="hidden md:block bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow overflow-x-auto rounded-lg">
+            <table className="min-w-full divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
+              <thead className="bg-[var(--background-200)] dark:bg-[var(--background-700)]">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Alergen
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Severitate
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Reacție
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-[var(--background-100)] dark:bg-[var(--background-800)] divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
+                {medicalHistory.allergies.map((allergy, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
                       {allergy.allergen}
-                    </h4>
-                    <p className="mt-1">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                        ${allergy.severity === 'Severe' 
-                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' 
-                          : allergy.severity === 'Moderate' 
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left">
+                      <span className={`inline-flex justify-center px-2 py-1 rounded-full text-xs font-semibold
+                        ${allergy.severity === 'Severe'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                          : allergy.severity === 'Moderate'
                             ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
                             : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                         }`}>
                         {allergy.severity}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
+                      {allergy.reaction || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+  
+          {/* Carduri doar pentru mobil */}
+          <div className="md:hidden space-y-4">
+            {medicalHistory.allergies.map((allergy, index) => (
+              <div key={index} className="bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow rounded-lg p-4 text-center">
+                <h4 className="text-lg font-medium text-[var(--text-900)] dark:text-[var(--text-50)]">
+                  {allergy.allergen}
+                </h4>
+                <div className="mt-2 flex flex-col items-center text-sm text-[var(--text-700)] dark:text-[var(--text-300)]">
+                  <p>
+                    <span className="font-medium">Severitate:</span>
+                  </p>
+                  <span className={`inline-flex justify-center mt-1 px-2 py-1 rounded-full text-xs font-semibold
+                    ${allergy.severity === 'Severe'
+                      ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                      : allergy.severity === 'Moderate'
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                        : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                    }`}>
+                    {allergy.severity}
+                  </span>
+                  {allergy.reaction && (
+                    <p className="mt-3">
+                      <span className="font-medium">Reacție:</span> {allergy.reaction}
                     </p>
-                    {allergy.reaction && (
-                      <p className="mt-2 text-sm text-[var(--text-700)] dark:text-[var(--text-300)]">
-                        Reacție: {allergy.reaction}
-                      </p>
-                    )}
-                  </div>
+                  )}
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
-
+  
+  
   const renderMedications = () => (
     <div className="space-y-4">
-      <h3 className="text-xl font-medium text-[var(--text-900)] dark:text-[var(--text-50)]">
-        <FaPills className="inline-block mr-2 text-[var(--primary-500)]" />
-        Medicație
-      </h3>
       {!medicalHistory?.medications?.length ? (
         renderNoDataMessage()
       ) : (
-        <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow overflow-hidden rounded-lg">
-          <ul className="divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
-            {medicalHistory.medications.map((medication, index) => (
-              <li key={index} className="px-4 py-4 sm:px-6">
-                <div>
-                  <h4 className="text-lg font-medium text-[var(--text-900)] dark:text-[var(--text-50)]">
-                    {medication.name}
-                  </h4>
-                  <div className="mt-1 grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <p className="text-sm text-[var(--text-700)] dark:text-[var(--text-300)]">
-                      <span className="inline-block font-medium sm:hidden">Dozaj: </span>
+        <>
+          {/* Tabel doar pentru desktop */}
+          <div className="hidden md:block bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow overflow-x-auto rounded-lg">
+            <table className="min-w-full divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
+              <thead className="bg-[var(--background-200)] dark:bg-[var(--background-700)]">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Medicament
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Dozaj
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Frecvență
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Data începerii
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Data terminării
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-[var(--background-100)] dark:bg-[var(--background-800)] divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
+                {medicalHistory.medications.map((medication, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
+                      {medication.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
                       {medication.dosage || 'Nespecificat'}
-                    </p>
-                    <p className="text-sm text-[var(--text-700)] dark:text-[var(--text-300)]">
-                      <span className="inline-block font-medium sm:hidden">Frecvență: </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
                       {medication.frequency || 'Nespecificat'}
-                    </p>
-                    {medication.startDate && (
-                      <p className="text-sm text-[var(--text-700)] dark:text-[var(--text-300)]">
-                        <span className="inline-block font-medium sm:hidden">Data începerii: </span>
-                        {format(new Date(medication.startDate), 'dd MMMM yyyy')}
-                      </p>
-                    )}
-                    {medication.endDate && (
-                      <p className="text-sm text-[var(--text-700)] dark:text-[var(--text-300)]">
-                        <span className="inline-block font-medium sm:hidden">Data terminării: </span>
-                        {format(new Date(medication.endDate), 'dd MMMM yyyy')}
-                      </p>
-                    )}
-                  </div>
-                  <p className="mt-2">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                      ${medication.status === 'Active' 
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
-                        : medication.status === 'Discontinued' 
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
+                      {medication.startDate ? format(new Date(medication.startDate), 'dd MMMM yyyy') : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-[var(--text-700)] dark:text-[var(--text-300)]">
+                      {medication.endDate ? format(new Date(medication.endDate), 'dd MMMM yyyy') : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                      <span className={`inline-flex justify-center mt-1 px-2 py-1 rounded-full text-xs font-semibold
+                        ${medication.status === 'Active'
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                          : medication.status === 'Discontinued'
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                        }`}>
+                        {medication.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+  
+          {/* Carduri doar pentru mobil */}
+          <div className="md:hidden space-y-4">
+            {medicalHistory.medications.map((medication, index) => (
+              <div key={index} className="bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow rounded-lg p-4 text-center">
+                <h4 className="text-lg font-medium text-[var(--text-900)] dark:text-[var(--text-50)]">
+                  {medication.name}
+                </h4>
+                <div className="mt-2 flex flex-col items-center text-sm text-[var(--text-700)] dark:text-[var(--text-300)] space-y-1">
+                  <p><span className="font-medium">Dozaj:</span> {medication.dosage || 'Nespecificat'}</p>
+                  <p><span className="font-medium">Frecvență:</span> {medication.frequency || 'Nespecificat'}</p>
+                  {medication.startDate && (
+                    <p><span className="font-medium">Început:</span> {format(new Date(medication.startDate), 'dd MMMM yyyy')}</p>
+                  )}
+                  {medication.endDate && (
+                    <p><span className="font-medium">Sfârșit:</span> {format(new Date(medication.endDate), 'dd MMMM yyyy')}</p>
+                  )}
+                  <div className="mt-2">
+                    <span className={`inline-flex justify-center px-2 py-1 rounded-full text-xs font-semibold
+                      ${medication.status === 'Active'
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                        : medication.status === 'Discontinued'
                           ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
                           : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                       }`}>
                       {medication.status}
                     </span>
-                  </p>
+                  </div>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
+  
 
   const renderSurgeries = () => (
     <div className="space-y-4">
@@ -460,7 +579,7 @@ function MyMedicalHistory() {
         <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] shadow rounded-lg">
           <div className="px-4 py-5 border-b border-[var(--background-200)] dark:border-[var(--background-700)] sm:px-6">
             <h2 className="text-2xl font-bold text-[var(--text-900)] dark:text-[var(--text-50)]">
-              Istoricul meu medical
+              My medical history
             </h2>
             {error && (
               <div className="mt-2 p-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-md">
@@ -481,7 +600,7 @@ function MyMedicalHistory() {
                       : 'border-transparent text-[var(--text-500)] hover:text-[var(--text-700)] hover:border-[var(--text-300)]'
                   } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
-                  <FaHeartbeat className="mr-2" /> Condiții medicale
+                  <FaHeartbeat className="mr-2" /> Medical conditions
                 </button>
                 <button
                   onClick={() => setActiveTab('allergies')}
@@ -491,7 +610,7 @@ function MyMedicalHistory() {
                       : 'border-transparent text-[var(--text-500)] hover:text-[var(--text-700)] hover:border-[var(--text-300)]'
                   } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
-                  <FaAllergies className="mr-2" /> Alergii
+                  <FaAllergies className="mr-2" /> Allergies
                 </button>
                 <button
                   onClick={() => setActiveTab('medications')}
@@ -501,7 +620,7 @@ function MyMedicalHistory() {
                       : 'border-transparent text-[var(--text-500)] hover:text-[var(--text-700)] hover:border-[var(--text-300)]'
                   } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
-                  <FaPills className="mr-2" /> Medicație
+                  <FaPills className="mr-2" /> Medication
                 </button>
                 <button
                   onClick={() => setActiveTab('surgeries')}
@@ -511,7 +630,7 @@ function MyMedicalHistory() {
                       : 'border-transparent text-[var(--text-500)] hover:text-[var(--text-700)] hover:border-[var(--text-300)]'
                   } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
-                  <FaProcedures className="mr-2" /> Intervenții
+                  <FaProcedures className="mr-2" /> Interventions
                 </button>
                 <button
                   onClick={() => setActiveTab('lifestyle')}
@@ -521,7 +640,7 @@ function MyMedicalHistory() {
                       : 'border-transparent text-[var(--text-500)] hover:text-[var(--text-700)] hover:border-[var(--text-300)]'
                   } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
-                  <FaUserCog className="mr-2" /> Stil de viață
+                  <FaUserCog className="mr-2" /> Life style
                 </button>
                 <button
                   onClick={() => setActiveTab('vitals')}
@@ -531,14 +650,14 @@ function MyMedicalHistory() {
                       : 'border-transparent text-[var(--text-500)] hover:text-[var(--text-700)] hover:border-[var(--text-300)]'
                   } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
-                  <FaNotesMedical className="mr-2" /> Semne vitale
+                  <FaNotesMedical className="mr-2" /> Vital signs
                 </button>
               </nav>
             </div>
 
             {/* Selector pentru mobil - afișat doar pe ecrane foarte mici */}
             <div className="sm:hidden mb-4 pt-2">
-              <label htmlFor="tabs" className="sr-only">Selectare secțiune</label>
+              <label htmlFor="tabs" className="sr-only">Select section</label>
               <select
                 id="tabs"
                 name="tabs"
@@ -546,12 +665,12 @@ function MyMedicalHistory() {
                 value={activeTab}
                 onChange={(e) => setActiveTab(e.target.value)}
               >
-                <option value="conditions">Condiții medicale</option>
-                <option value="allergies">Alergii</option>
-                <option value="medications">Medicație</option>
-                <option value="surgeries">Intervenții chirurgicale</option>
-                <option value="lifestyle">Stil de viață</option>
-                <option value="vitals">Semne vitale</option>
+                <option value="conditions">Medical conditions</option>
+                <option value="allergies">Allergies</option>
+                <option value="medications">Medication</option>
+                <option value="surgeries">Interventions</option>
+                <option value="lifestyle">Life style</option>
+                <option value="vitals">Vital signs</option>
               </select>
             </div>
 

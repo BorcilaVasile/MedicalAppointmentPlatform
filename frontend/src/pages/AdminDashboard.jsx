@@ -5,7 +5,6 @@ import { FaUsers, FaUserMd, FaHospital, FaPlus, FaChartLine, FaStar, FaCalendarC
 import AdminUsersList from '../components/admin/AdminUsersList';
 import AdminClinicsList from '../components/admin/AdminClinicsList';
 import AdminAppointmentsList from '../components/admin/AdminAppointmentsList';
-import AddDoctorModal from '../components/admin/AddDoctorModal';
 import AppointmentsChart from '../components/admin/AppointmentsChart';
 import UserGrowthChart from '../components/admin/UserGrowthChart';
 import DoctorPerformanceChart from '../components/admin/DoctorPerformanceChart';

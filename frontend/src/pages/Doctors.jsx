@@ -20,15 +20,50 @@ const Doctors = () => {
 
   useEffect(() => {
     const fetchDoctors = async () => {
-      try {
-        const response = await apiClient.get('/api/doctors');
-        setDoctors(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch doctors');
-        setLoading(false);
-      }
-    };
+          try {
+            setLoading(true);
+            const response = await apiClient.get('/api/doctors');
+            if (!response.data || !Array.isArray(response.data)) {
+              throw new Error('Invalid response format');
+            }
+        
+            const doctorsData = response.data;
+        
+            const doctorsWithReviews = await Promise.all(
+              doctorsData.map(async (doctor) => {
+                try {
+                  const reviewsResponse = await apiClient.get(`/api/reviews/${doctor._id}`);
+                  const reviews = reviewsResponse.data || [];
+        
+                  const averageRating = reviews.length > 0
+                    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+                    : 0;
+        
+                  return {
+                    ...doctor,
+                    reviews,
+                    averageRating,
+                  };
+                } catch (reviewError) {
+                  console.error(`Error fetching reviews for doctor ${doctor._id}:`, reviewError);
+                  return {
+                    ...doctor,
+                    reviews: [],
+                    averageRating: 0,
+                  };
+                }
+              })
+            );
+        
+            setDoctors(doctorsWithReviews);
+            setError(null);
+          } catch (err) {
+            console.error('Error fetching doctors:', err);
+            setError(err.response?.data?.message || 'Doctors couldn\'t be loaded');
+          } finally {
+            setLoading(false);
+          }
+        };
 
     const fetchSpecialties = async () => {
       try {
@@ -157,7 +192,7 @@ const Doctors = () => {
           {/* Doctors Grid */}
           <div className="lg:w-3/4">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredDoctors.map((doctor) => (
+              {filteredDoctors.map((doctor) => doctor.active ? (
                 <Link
                     key={doctor._id}
                   to={`/doctors/${doctor._id}`}
@@ -176,12 +211,12 @@ const Doctors = () => {
                           <FaStar
                             key={i}
                             className={`w-4 h-4 ${
-                              i < doctor.rating ? 'text-yellow-400' : 'text-gray-400'
+                              i < doctor.averageRating ? 'text-yellow-400' : 'text-gray-400'
                             }`}
                           />
                         ))}
                         <span className="ml-2 text-white text-sm">
-                          ({doctor.reviewCount || 0} reviews)
+                          ({doctor.reviews.length || 0} reviews)
                         </span>
                       </div>
                     </div>
@@ -203,7 +238,8 @@ const Doctors = () => {
                     </div>
                   </div>
                 </Link>
-              ))}
+              ): null
+            )}
             </div>
               </div>
         </div>

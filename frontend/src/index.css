@@ -71,67 +71,67 @@
 
   /* Light theme - explicitly define the same variables so they can be customized */
   .light {
-    /* TEXT - Griuri neutre și lizibile */
-    --text-50:  #f9fafb;
-    --text-100: #f3f4f6;
-    --text-200: #e5e7eb;
-    --text-300: #d1d5db;
-    --text-400: #9ca3af;
-    --text-500: #6b7280;
-    --text-600: #4b5563;
-    --text-700: #374151;
+    /* TEXT - Darker grays for better readability */
+    --text-50:  #f9fafb; /* Keep as is for very light text */
+    --text-100: #e5e7eb;
+    --text-200: #d1d5db;
+    --text-300: #9ca3af;
+    --text-400: #6b7280; /* Slightly darker for better contrast */
+    --text-500: #4b5563; /* Darker gray */
+    --text-600: #374151; /* Darker for better contrast */
+    --text-700: #2d3748; /* Even darker */
     --text-800: #1f2937;
     --text-900: #111827;
-
-    /* BACKGROUND - Curat și aerisit - Mai deschis pentru tema light */
-    --background-50:  #ffffff;
+  
+    /* BACKGROUND - Adjusted for more depth */
+    --background-50:  #ffffff; /* Keep as is */
     --background-100: #f9fafb;
     --background-200: #f3f4f6;
     --background-300: #e5e7eb;
     --background-400: #d1d5db;
-    --background-500: #f3f4f6; /* Schimbat în culoare mai deschisă pentru navbar */
-    --background-600: #e5e7eb;
-    --background-700: #d1d5db;
-    --background-800: #9ca3af;
-    --background-900: #6b7280;
-
-    /* PRIMARY - Albastru medical încrezător */
+    --background-500: #b0b8c4; /* Darker for navbar or cards */
+    --background-600: #9ca3af;
+    --background-700: #6b7280;
+    --background-800: #4b5563;
+    --background-900: #374151;
+  
+    /* PRIMARY - Adjusted blue for better contrast */
     --primary-50:  #eff6ff;
     --primary-100: #dbeafe;
     --primary-200: #bfdbfe;
     --primary-300: #93c5fd;
     --primary-400: #60a5fa;
-    --primary-500: #3b82f6;
-    --primary-600: #2563eb;
-    --primary-700: #1d4ed8;
-    --primary-800: #1e40af;
-    --primary-900: #1e3a8a;
-
-    /* SECONDARY - Verde calm, simbol al sănătății și echilibrului */
+    --primary-500: #2563eb; /* Darkened to improve contrast */
+    --primary-600: #1d4ed8;
+    --primary-700: #1e40af;
+    --primary-800: #1e3a8a;
+    --primary-900: #172554;
+  
+    /* SECONDARY - Adjusted green for better contrast */
     --secondary-50:  #f0fdf4;
     --secondary-100: #dcfce7;
     --secondary-200: #bbf7d0;
     --secondary-300: #86efac;
     --secondary-400: #4ade80;
-    --secondary-500: #22c55e;
-    --secondary-600: #16a34a;
-    --secondary-700: #15803d;
-    --secondary-800: #166534;
-    --secondary-900: #14532d;
-
-    /* ACCENT - Portocaliu corai cald (pentru butoane, alerte soft) */
+    --secondary-500: #16a34a; /* Darkened to improve contrast */
+    --secondary-600: #15803d;
+    --secondary-700: #166534;
+    --secondary-800: #14532d;
+    --secondary-900: #0d3d1f;
+  
+    /* ACCENT - Adjusted orange for better contrast */
     --accent-50:  #fff7ed;
     --accent-100: #ffedd5;
     --accent-200: #fed7aa;
     --accent-300: #fdba74;
     --accent-400: #fb923c;
-    --accent-500: #f97316;
-    --accent-600: #ea580c;
-    --accent-700: #c2410c;
-    --accent-800: #9a3412;
-    --accent-900: #7c2d12;
+    --accent-500: #ea580c; /* Darkened to improve contrast */
+    --accent-600: #c2410c;
+    --accent-700: #9a3412;
+    --accent-800: #7c2d12;
+    --accent-900: #5a270e;
   }
-
+  
   .dark {
     /* Nord Theme - Optimized pentru ochi obosiți */
     --text-50: #eceff4;
