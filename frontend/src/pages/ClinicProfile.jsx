@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaMapMarkerAlt, FaPhone, FaClock, FaCalendar } from 'react-icons/fa';
-import apiClient, { getImageUrl } from '../config/api';
+import { apiClient, getImageUrl } from '../config/api';
 import maleProfilePicture from '../assets/male_profile_picture.png';
 import femaleProfilePicture from '../assets/female_profile_picture.png';
+import placeholderClinicImage from '../assets/placeholder-clinic.png';
 
 function ClinicProfile() {
   const { id } = useParams();
@@ -19,16 +20,17 @@ function ClinicProfile() {
         setLoading(true);
         const response = await apiClient.get(`/api/clinics/${id}`);
         setClinic(response.data);
+        setLoading(false);
+        console.log('Clinic data: ', clinic);
         setError(null);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch clinic data');
-      } finally {
         setLoading(false);
       }
     };
 
     fetchClinicData();
-  }, [id]);
+  },[]);
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -74,13 +76,16 @@ function ClinicProfile() {
       {/* Hero Section */}
       <div className="relative h-[400px]">
         <img
-          src={clinic.image ? getImageUrl(clinic.image) : '/default-clinic.jpg'}
+          src={clinic.image ? getImageUrl(clinic.image) : placeholderClinicImage}
           alt={clinic.name}
+          onError={(e) => {
+            e.target.src = placeholderClinicImage;
+          }}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black bg-opacity-50">
-          <div className="container mx-auto px-4 h-full flex items-center">
-            <div className="text-white">
+        <div className="absolute inset-0 flex items-end justify-start">
+          <div className="px-4 pb-4">
+            <div className="text-white text-left bg-slate-900 bg-opacity-90 backdrop-blur-md p-6 rounded-lg w-fit">
               <h1 className="text-4xl md:text-5xl font-bold mb-4">{clinic.name}</h1>
               <p className="text-xl md:text-2xl opacity-90">{clinic.description}</p>
             </div>
@@ -94,14 +99,14 @@ function ClinicProfile() {
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-[var(--background-900)] rounded-xl shadow-lg p-6 mb-8">
               <h2 className="text-2xl font-bold text-[var(--text-900)] dark:text-[var(--text-100)] mb-6">
-                Despre Clinică
+                About clinic
               </h2>
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <FaMapMarkerAlt className="w-6 h-6 text-[var(--primary-500)] mt-1" />
                   <div>
                     <h3 className="text-lg font-semibold text-[var(--text-900)] dark:text-[var(--text-100)] mb-1">
-                      Adresă
+                      Address
                     </h3>
                     <p className="text-[var(--text-600)] dark:text-[var(--text-400)]">
                       {clinic.address}
@@ -174,7 +179,7 @@ function ClinicProfile() {
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-[var(--background-900)] rounded-xl shadow-lg p-6 mb-8">
               <h2 className="text-2xl font-bold text-[var(--text-900)] dark:text-[var(--text-100)] mb-6">
-                Facilități
+                Facilities
               </h2>
               <ul className="space-y-3">
                 {[
@@ -198,7 +203,7 @@ function ClinicProfile() {
 
             <div className="bg-white dark:bg-[var(--background-900)] rounded-xl shadow-lg p-6">
               <h2 className="text-2xl font-bold text-[var(--text-900)] dark:text-[var(--text-100)] mb-6">
-                Servicii
+                Servicies
               </h2>
               <ul className="space-y-3">
                 {[

@@ -7,10 +7,12 @@ import apiClient from '../config/api';
 function MyAppointments() {
   const { token } = useAuth();
   const [appointments, setAppointments] = useState([]);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { isAuthenticated } = useAuth();
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     fetchAppointments();
@@ -21,6 +23,7 @@ function MyAppointments() {
       setLoading(true);
       const response = await apiClient.get('/api/appointments/user');
       setAppointments(response.data);
+      setFilteredAppointments(response.data);
       setError(null);
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -30,63 +33,68 @@ function MyAppointments() {
     }
   };
 
+  useEffect(() => {
+    const now = new Date();
+    const filtered = appointments.filter((appointment) => {
+      const appointmentDate = new Date(appointment.date);
+      const appointmentTime = appointment.time.split(':');
+      appointmentDate.setHours(appointmentTime[0], appointmentTime[1]);
+
+      if (filter === 'all') return true;
+      if (filter === 'upcoming') return appointmentDate > now && appointment.status !== 'cancelled';
+      if (filter === 'past') return appointmentDate < now;
+      if (filter === 'cancelled') return appointment.status === 'cancelled';
+      if (filter === 'confirmed') return appointment.status === 'confirmed';
+      if (filter === 'pending') return appointment.status === 'pending';
+      if (filter === 'completed') return appointment.status === 'completed';
+      return true;
+    });
+    setFilteredAppointments(filtered);
+  }, [appointments, filter]);
+
   const handleCancelAppointment = async (appointmentId, e) => {
-    if (e) {
-      e.stopPropagation();
-    }
-    
-    if (!window.confirm('Are you sure you want to cancel this appointment?')) {
-      return;
-    }
+    if (e) e.stopPropagation();
+    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+
     try {
-      const response=await apiClient.put(`/api/appointments/${appointmentId}/cancel`);
-      // Update the appointment status locally
-      setAppointments(prevAppointments =>
-        prevAppointments.map(app =>
-          app._id === appointmentId ? { ...app, status: 'cancelled' } : app
-        )
+      const response = await apiClient.put(`/api/appointments/${appointmentId}/cancel`);
+      setAppointments((prev) =>
+        prev.map((app) => (app._id === appointmentId ? { ...app, status: 'cancelled' } : app))
       );
 
       const { appointment } = response.data;
-     if(response){
-           try {
-             await apiClient.post('/api/notifications', {
-               recipient: appointment.doctor._id, 
-               recipientType: 'Doctor',
-               sender: token.id,
-               senderType: 'Patient',
-               type: 'APPOINTMENT_CANCELLED',
-               appointment: appointment._id,
-               message: `${appointment.patient.name} has canceled his appointment for ${format(new Date(appointment.date), 'MMMM d, yyyy')} at ${appointment.time}.`
-             }, {
-               headers: {
-                 Authorization: `Bearer ${localStorage.getItem('token')}`,
-               },
-             });
-           } catch (notificationError) {
-             console.error('Failed to create notification for patient:', notificationError);
-           }
-         }
+      if (response) {
+        try {
+          await apiClient.post(
+            '/api/notifications',
+            {
+              recipient: appointment.doctor._id,
+              recipientType: 'Doctor',
+              sender: token.id,
+              senderType: 'Patient',
+              type: 'APPOINTMENT_CANCELLED',
+              appointment: appointment._id,
+              message: `${appointment.patient.name} has canceled his appointment for ${format(new Date(appointment.date), 'MMMM d, yyyy')} at ${appointment.time}.`,
+            },
+            { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+          );
+        } catch (notificationError) {
+          console.error('Failed to create notification for patient:', notificationError);
+        }
+      }
     } catch (error) {
       console.error('Error cancelling appointment:', error);
       setError(error.response?.data?.message || 'Failed to cancel appointment');
     }
-
-    
   };
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+      case 'confirmed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'completed': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
@@ -106,34 +114,49 @@ function MyAppointments() {
     );
   }
 
+  // Butoane pentru filtrare
+  const FilterButtons = () => (
+    <div className="flex flex-wrap gap-2 mb-4">
+      {[
+        { label: 'All', value: 'all' },
+        { label: 'Upcoming', value: 'upcoming' },
+        { label: 'Past', value: 'past' },
+        { label: 'Confirmed', value: 'confirmed' },
+        { label: 'Pending', value: 'pending' },
+        { label: 'Completed', value: 'completed' },
+        { label: 'Cancelled', value: 'cancelled' },
+      ].map((option) => (
+        <button
+          key={option.value}
+          onClick={() => setFilter(option.value)}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
+            filter === option.value
+              ? 'bg-[var(--primary-500)] text-white'
+              : 'bg-[var(--background-200)] dark:bg-[var(--background-700)] text-[var(--text-900)] dark:text-[var(--text-50)] hover:bg-[var(--primary-400)] hover:text-white'
+          } transition-colors`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+
   // Desktop view - table layout
   const DesktopView = () => (
     <div className="hidden md:block overflow-x-auto">
       <table className="min-w-full divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
         <thead className="bg-[var(--background-200)] dark:bg-[var(--background-700)]">
           <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
-              Doctor
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
-              Date & Time
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
-              Clinic
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
-              Reason
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
-              Status
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">
-              Actions
-            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">Doctor</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">Date & Time</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">Clinic</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">Reason</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">Status</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[var(--text-500)] uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody className="bg-[var(--background-100)] dark:bg-[var(--background-800)] divide-y divide-[var(--background-200)] dark:divide-[var(--background-700)]">
-          {appointments.map((appointment) => (
+          {filteredAppointments.map((appointment) => (
             <tr key={appointment._id} className="hover:bg-[var(--background-200)] dark:hover:bg-[var(--background-700)] transition-colors duration-200">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
@@ -189,7 +212,7 @@ function MyAppointments() {
   // Mobile view - card layout
   const MobileView = () => (
     <div className="md:hidden space-y-4">
-      {appointments.map((appointment) => (
+      {filteredAppointments.map((appointment) => (
         <div 
           key={appointment._id} 
           className="bg-[var(--background-100)] dark:bg-[var(--background-800)] rounded-lg shadow-sm overflow-hidden"
@@ -233,12 +256,10 @@ function MyAppointments() {
             </div>
           </div>
           
-          {/* Expandable details section */}
           {selectedAppointment?._id === appointment._id && (
             <div className="px-4 py-3 bg-[var(--background-200)] dark:bg-[var(--background-700)] text-sm">
               <h4 className="font-medium text-[var(--text-900)] dark:text-[var(--text-50)] mb-1">Appointment reason:</h4>
               <p className="text-[var(--text-700)] dark:text-[var(--text-300)] mb-2">{appointment.reason}</p>
-              
               <h4 className="font-medium text-[var(--text-900)] dark:text-[var(--text-50)] mb-1">Location:</h4>
               <p className="text-[var(--text-700)] dark:text-[var(--text-300)]">{appointment.clinic?.address || 'Address not available'}</p>
             </div>
@@ -269,10 +290,12 @@ function MyAppointments() {
             </div>
           )}
 
-          {appointments.length === 0 ? (
+          <FilterButtons /> {/* Adaugă butoanele de filtrare */}
+
+          {filteredAppointments.length === 0 ? (
             <div className="p-6 text-center text-[var(--text-500)] dark:text-[var(--text-400)]">
               <FaInfoCircle className="h-12 w-12 mx-auto mb-4 text-[var(--text-400)]" />
-              <p className="text-lg">You don't have any appointments yet.</p>
+              <p className="text-lg">No appointments match your filter.</p>
             </div>
           ) : (
             <>
@@ -286,4 +309,4 @@ function MyAppointments() {
   );
 }
 
-export default MyAppointments; 
+export default MyAppointments;

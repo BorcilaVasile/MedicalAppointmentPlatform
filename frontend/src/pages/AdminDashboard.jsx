@@ -62,9 +62,6 @@ const AdminDashboard = () => {
         activityStats: activityStatsResponse.data
       });
 
-      console.log('Stats response: ', dashboardData.stats);
-      console.log('Doctor stat response', dashboardData.doctorStats);
-      console.log('Activity stats response ', dashboardData.activityStats);
       setError(null);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -216,21 +213,21 @@ const AdminDashboard = () => {
 
               {/* Data Visualization - First Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
-                <div className="overflow-hidden h-[200px] sm:h-[450px] md:h-[500px]">
+                <div className="overflow-hidden  sm:h-[450px] md:h-[500px]">
                   <AppointmentsChart appointmentData={dashboardData.activityStats.appointmentStats} />
                 </div>
-                <div className="overflow-hidden h-[200px] sm:h-[450px] md:h-[500px]">
+                <div className="overflow-hidden  sm:h-[450px] md:h-[500px]">
                   <SpecialtyDistributionChart specialtyData={dashboardData.activityStats.appointmentStats.bySpecialty} />
                 </div>
               </div>
 
               {/* User Growth Chart */}
-              <div className="overflow-hidden h-[250px] sm:h-[300px] md:h-[350px]">
+              <div className="overflow-hidden sm:h-[300px] md:h-[350px]">
                 <UserGrowthChart userStats={dashboardData.activityStats.userStats} />
               </div>
 
               {/* Top Doctors Performance Chart */}
-              <div className="overflow-hidden h-[250px] sm:h-[300px] md:h-[450px]">
+              <div className="overflow-hidden sm:h-[300px] md:h-[450px]">
                 <DoctorPerformanceChart doctorsData={dashboardData.activityStats.topDoctors} />
               </div>
 

@@ -16,6 +16,7 @@ import Doctors from './pages/Doctors';
 import Notifications from './pages/Notifications';
 import MyAppointments from './pages/MyAppointments';
 import MyMedicalHistory from './pages/MyMedicalHistory';
+import DoctorPatients  from './pages/DoctorPatients';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './App.css';
@@ -52,6 +53,11 @@ function App() {
               <Route path="/doctor/dashboard" element={
                 <PrivateRoute requiredRole="doctor">
                   <DoctorDashboard />
+                </PrivateRoute>
+              } />
+              <Route path="/doctor/patients" element={ 
+                <PrivateRoute requiredRole="doctor">
+                  <DoctorPatients/>
                 </PrivateRoute>
               } />
               <Route path="/doctors" element={<Doctors />} />

@@ -4,6 +4,7 @@ import { FaTrash, FaHospital, FaMapMarkerAlt, FaPhone, FaPlus, FaEye, FaEdit, Fa
 import { useAuth } from '../../context/AuthContext';
 import AddClinicModal from './AddClinicModal';
 import { apiClient, getImageUrl } from '../../config/api';
+import EditClinicModal from './EditClinicModal';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -14,7 +15,10 @@ const AdminClinicsList = ({ onRefresh }) => {
   const [page, setPage] = useState(1);
   const [totalClinics, setTotalClinics] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedClinic, setSelectedClinic] = useState(null);
   const { token } = useAuth();
+
 
   const fetchClinics = useCallback(async () => {
     try {
@@ -68,7 +72,22 @@ const AdminClinicsList = ({ onRefresh }) => {
     setClinics([...clinics, newClinic]);
   };
 
+  const handleEditClinic = (clinic) => {
+    setSelectedClinic(clinic);
+    setIsEditModalOpen(true);
+  };
+  
+  const handleClinicUpdated = (updatedClinic) => {
+    setClinics(clinics.map(clinic => 
+      clinic._id === updatedClinic._id ? updatedClinic : clinic
+    ));
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
+
   const totalPages = Math.ceil(totalClinics / ITEMS_PER_PAGE);
+  
 
   if (loading) return (
     <div className="bg-[var(--background-100)] dark:bg-[var(--background-800)] rounded-xl shadow-lg p-6">
@@ -156,9 +175,24 @@ const AdminClinicsList = ({ onRefresh }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-3">
+                        <Link
+                          to={`/clinics/${clinic._id}`}
+                          className="text-[var(--primary-500)] hover:text-[var(--primary-700)] dark:text-[var(--primary-400)] dark:hover:text-[var(--primary-300)] transition-colors duration-200"
+                          title="View Clinic Profile"
+                        >
+                          <FaEye />
+                        </Link>
+                        <button
+                          onClick={() => handleEditClinic(clinic)}
+                          className="text-[var(--secondary-500)] hover:text-[var(--secondary-700)] dark:text-[var(--secondary-400)] dark:hover:text-[var(--secondary-300)] transition-colors duration-200"
+                          title="Edit Clinic"
+                        >
+                          <FaEdit />
+                        </button>
                         <button
                           onClick={() => handleDeleteClinic(clinic._id)}
                           className="text-[var(--error-500)] hover:text-[var(--error-700)] dark:text-[var(--error-400)] dark:hover:text-[var(--error-300)] transition-colors duration-200"
+                          title="Delete Clinic"
                         >
                           <FaTrash />
                         </button>
@@ -238,6 +272,16 @@ const AdminClinicsList = ({ onRefresh }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onClinicAdded={handleClinicAdded}
+      />
+
+      <EditClinicModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedClinic(null);
+        }}
+        onSuccess={handleClinicUpdated}
+        clinic={selectedClinic}
       />
     </div>
   );

@@ -261,6 +261,14 @@ function Navbar() {
                   {hasRole('admin') ? 'Admin' : hasRole('doctor') ? 'Doctor' : ''}
                 </Link>
               )}
+              {userRole ==='Doctor' && isAuthenticated && (
+                <Link to="/doctor/patients"
+                className="light:hover:text-[var(--primary-600)
+                dark:hover:text-[var(--primary-400)]
+                flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Patients
+                </Link>
+              )}
             </div>
           </div>
 
@@ -282,7 +290,8 @@ function Navbar() {
                   </button>
 
                   {showNotifications && (
-                    <div className="absolute right-0 mt-2 w-96 bg-white light:bg-white dark:bg-[#1F1F2E] rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200 light:border-gray-200 dark:border-gray-700">
+                   <div className="absolute left-1/2 transform -translate-x-1/2 sm:right-0 sm:left-auto sm:translate-x-0 mt-2 w-[90vw] sm:w-96 max-w-[90vw] bg-white light:bg-white dark:bg-[#1F1F2E] rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200 light:border-gray-200 dark:border-gray-700">
+
                       {/* Mark all as read button */}
                       <div className="px-4 py-2 flex items-center text-gray-600 light:text-gray-600 dark:text-gray-400 hover:text-gray-900 light:hover:text-gray-900 dark:hover:text-white cursor-pointer border-b border-gray-200 light:border-gray-200 dark:border-gray-700"
                         onClick={(e) => {
@@ -516,27 +525,27 @@ function Navbar() {
               {isAuthenticated && !hasRole('doctor') && (
                 <Link
                   to="/medical-history"
-                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
+                  className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaNotesMedical className="mr-3" />
+                  <FaNotesMedical />
                   Medical History
                 </Link>
               )}
               {isAuthenticated && (
                 <Link
                   to="/appointments"
-                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
+                  className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <FaCalendarAlt className="mr-3" />
+                  <FaCalendarAlt />
                   My Appointments
                 </Link>
               )}
-              {isAuthenticated && (
+              {userRole !== 'Patient' && isAuthenticated && (
                 <Link
                   to={getDashboardLink()}
-                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
+                  className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {getDashboardIcon()}
@@ -545,17 +554,19 @@ function Navbar() {
               )}
               {isAuthenticated && (
                 <Link
-                  to="/account"
-                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
-                  onClick={() => setIsMenuOpen(false)}>
-                  <FaUser className="mr-3" />
-                  My account
-                </Link>)}
+                to="/account"
+                className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FaUser />
+                My account
+              </Link>
+              )}
               {isAuthenticated && (
                 <button
                   onClick={handleLogout}
-                  className="inline-flex items-center px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium">
-                  <FaSignOutAlt className="mr-3" />Disconnect
+                  className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[var(--text-900)] light:text-[var(--text-900)] hover:text-[var(--primary-600)] light:hover:text-[var(--primary-600)] dark:text-[var(--text-50)] dark:hover:text-[var(--primary-400)] rounded-md text-base font-medium">
+                  <FaSignOutAlt />Disconnect
                 </button>
               )}
               {!isAuthenticated && (
